@@ -1,0 +1,7 @@
+.chrome-profile/
+.venv/
+__pycache__/
+*.pyc
+web/_screenshot.png
+web/qa_*.png
+*.zip

@@ -1,0 +1,13 @@
+ba,ba_name,region,hours,demand_twh,peak_demand_mw,peak_hour_utc,mean_demand_mw,coal_share_pct,natural_gas_share_pct,nuclear_share_pct,petroleum_share_pct,hydro_share_pct,pumped_storage_share_pct,solar_share_pct,wind_share_pct,battery_share_pct,other_storage_share_pct,geothermal_share_pct,other_share_pct,unknown_share_pct
+CISO,California ISO (CAISO),CAL,8760,223.9,43860,2025-08-22T03:00:00Z,25563,0.0,39.6,8.8,0.2,10.7,0.0,25.0,9.9,0.0,0.0,0.1,5.6,0.0
+ERCO,ERCOT (Texas),TEX,8760,486.7,83597,2025-08-18T23:00:00Z,55717,12.8,40.5,8.5,0.0,0.1,0.0,13.7,23.3,1.1,0.0,0.0,0.1,0.0
+PJM,PJM Interconnection,MIDA,8760,843.1,160560,2025-06-23T22:00:00Z,96257,16.7,42.0,31.0,0.6,1.8,0.0,2.8,3.7,0.0,0.0,0.0,1.4,0.0
+MISO,Midcontinent ISO (MISO),MIDW,8760,663.8,120343,2025-07-24T21:00:00Z,75779,29.1,35.4,13.9,0.0,1.5,0.0,4.5,15.0,0.0,0.0,0.0,0.6,0.0
+NYIS,New York ISO (NYISO),NY,8760,151.5,31857,2025-06-24T23:00:00Z,17300,0.0,53.0,21.1,0.1,18.2,0.0,0.0,5.3,0.0,0.0,0.0,2.2,0.0
+ISNE,ISO New England,NE,8760,115.3,25898,2025-06-24T23:00:00Z,13160,0.3,56.1,25.6,1.1,4.8,1.8,1.5,4.2,0.1,0.0,0.0,4.4,0.0
+SWPP,Southwest Power Pool (SPP),CENT,8760,299.5,54411,2025-07-29T22:00:00Z,34187,29.0,25.1,5.4,0.0,2.9,0.0,0.8,36.6,0.0,0.0,0.0,0.2,0.0
+BPAT,Bonneville Power Administration,NW,8760,61.1,11537,2025-02-12T16:00:00Z,6976,0.0,7.3,9.4,0.0,73.2,0.0,0.6,8.0,0.0,0.0,0.0,1.4,0.0
+DUK,Duke Energy Carolinas,CAR,8760,109.8,21931,2025-06-25T20:00:00Z,12537,17.9,23.6,52.7,0.0,1.7,2.3,1.7,0.0,0.0,0.0,0.0,0.1,0.0
+SOCO,Southern Company,SE,8760,241.4,46490,2025-01-22T14:00:00Z,27554,17.2,48.9,25.0,0.0,2.3,0.8,4.9,0.0,0.0,0.0,0.0,0.9,0.0
+TVA,Tennessee Valley Authority,TEN,8760,170.7,35086,2025-01-22T14:00:00Z,19490,16.9,33.7,35.8,0.0,10.6,1.1,1.7,0.0,0.0,0.0,0.0,0.2,0.0
+FPL,Florida Power & Light,FLA,8760,146.6,28963,2025-07-28T21:00:00Z,16731,0.0,66.7,20.6,0.0,0.0,0.0,11.2,0.0,0.0,0.0,0.0,1.6,0.0

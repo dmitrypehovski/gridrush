@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GRIDRUSH - real AC power flow on a real MV feeder</title>
+<style>
+:root{
+  --bg:#070c15; --card:#0f1a2c; --card2:#0b1525; --line:#22314b; --txt:#e9eef8;
+  --mut:#93a4bf; --green:#35d98f; --red:#ff5f63; --amber:#ffb347; --blue:#58a6ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:
+  radial-gradient(1400px 700px at 50% -180px,#13233f 0%,rgba(19,35,63,0) 60%),
+  var(--bg);
+  color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:17px;line-height:1.45}
+.wrap{max-width:1460px;margin:0 auto;padding:30px 40px 56px}
+h1{font-size:42px;line-height:1.1;margin:0 0 8px;letter-spacing:-.8px}
+h2{font-size:27px;margin:38px 0 14px;letter-spacing:-.3px}
+h2 .n{color:var(--mut);font-weight:600;margin-right:10px}
+.sub{color:var(--mut);font-size:18px;max-width:1180px;margin:0 0 8px}
+.badge{display:inline-block;font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--green);border:1px solid rgba(53,217,143,.4);border-radius:99px;padding:3px 11px;margin-bottom:14px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:22px}
+.kpi{background:linear-gradient(180deg,var(--card) 0%,var(--card2) 100%);
+  border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.kpi .k{color:var(--mut);font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.kpi .v{font-size:40px;font-weight:750;letter-spacing:-1px;margin:6px 0 2px}
+.kpi .d{color:var(--mut);font-size:15px}
+.kpi.good .v{color:var(--green)} .kpi.bad .v{color:var(--red)} .kpi.warn .v{color:var(--amber)}
+.verdicts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.verdict{border-radius:16px;padding:22px 26px;border:1px solid var(--line);background:var(--card)}
+.verdict .tag{font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.verdict .head{font-size:30px;font-weight:760;letter-spacing:-.4px;margin:6px 0 6px}
+.verdict .det{color:#cdd8ea;font-size:17px}
+.verdict.ok{border-color:rgba(53,217,143,.55);box-shadow:inset 0 0 0 1px rgba(53,217,143,.12),0 0 40px rgba(53,217,143,.06)}
+.verdict.ok .head{color:var(--green)}
+.verdict.bad{border-color:rgba(255,95,99,.55);box-shadow:inset 0 0 0 1px rgba(255,95,99,.10),0 0 40px rgba(255,95,99,.06)}
+.verdict.bad .head{color:var(--red)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 24px;overflow-x:auto}
+.grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:14px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);text-align:left;
+  padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid rgba(34,49,75,.55);font-size:16px;white-space:nowrap}
+td.r,th.r{text-align:right}
+.bar{height:14px;border-radius:7px;background:#18304c;position:relative;min-width:120px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:linear-gradient(90deg,#2b7fff,#58a6ff)}
+.bar i.hot{background:linear-gradient(90deg,#ff7a3d,#ffb347)}
+.tagA{color:var(--blue)} .tagB{color:#c58cff}
+.pill{display:inline-block;font-size:13px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mut)}
+.pill.g{color:var(--green);border-color:rgba(53,217,143,.45)}
+.pill.r{color:var(--red);border-color:rgba(255,95,99,.45)}
+.pill.a{color:var(--amber);border-color:rgba(255,179,71,.45)}
+.legend{display:flex;gap:22px;flex-wrap:wrap;margin:2px 0 8px;color:var(--mut);font-size:15px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:22px;height:4px;border-radius:2px}
+.note{color:var(--mut);font-size:15px;margin-top:10px}
+ul.break{margin:6px 0 0 0;padding-left:20px}
+ul.break li{margin:7px 0;font-size:16.5px}
+ul.break b{color:#fff}
+footer{margin-top:42px;border-top:1px solid var(--line);padding-top:18px;color:var(--mut);font-size:14.5px}
+footer li{margin:5px 0}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px}
+@media (max-width:1150px){.kpis{grid-template-columns:repeat(2,1fr)}.verdicts{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="badge">GRIDRUSH &middot; grid physics check</div>
+  <h1>Real AC power flow on a real medium-voltage feeder</h1>
+  <p class="sub" id="subtitle"></p>
+
+  <div class="kpis" id="kpis"></div>
+  <div class="verdicts" id="verdicts"></div>
+
+  <h2><span class="n">01</span>Feeder headroom, per bus</h2>
+  <div class="card">
+    <p class="note" style="margin-top:0" id="hrNote"></p>
+    <table id="hrTable"><thead><tr>
+      <th>Bus</th><th>MV sub-area</th><th class="r">Existing load (MW)</th><th class="r">Base voltage (p.u.)</th>
+      <th class="r">Headroom (MW)</th><th style="width:26%">Largest added load with 0 violations</th><th>Binds first</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <h2><span class="n">02</span>Bus voltage: base case vs with our load</h2>
+  <div class="card">
+    <div class="legend" id="voltLegend"></div>
+    <div id="voltChart"></div>
+    <p class="note" id="voltNote"></p>
+  </div>
+
+  <h2><span class="n">03</span>Branch loading after the load is added</h2>
+  <div class="card">
+    <div id="loadChart"></div>
+    <p class="note" id="loadNote"></p>
+  </div>
+
+  <h2><span class="n">04</span>What breaks, and where</h2>
+  <div class="grid2">
+    <div class="card"><table id="caseTable"><thead><tr>
+      <th>Site</th><th>Bus</th><th>Sub-area</th><th class="r">MW</th><th class="r">Bus headroom (MW)</th><th>AC check</th>
+    </tr></thead><tbody></tbody></table>
+    <p class="note" id="caseNote"></p></div>
+    <div class="card"><ul class="break" id="breakList"></ul></div>
+  </div>
+
+  <footer>
+    <b>Honesty notes</b>
+    <ul id="caveats"></ul>
+  </footer>
+</div>
+<script>
+const D = {"feeder":"mv_oberrhein","feeder_info":{"name":"mv_oberrhein","source":"pandapower.networks.mv_oberrhein (bundled with pandapower)","note":"real 20 kV German MV network (Oberrhein region); public test case","n_bus":179,"n_line":181,"n_trafo":2,"mv_kv":20.0,"hv_kv":110.0,"trafo_mva":25.0,"nominal_load_mw":61.86,"load_scaling":0.6,"served_load_mw":37.12,"areas":[{"trafo":114,"n_bus":69,"served_load_mw":16.842},{"trafo":142,"n_bus":108,"served_load_mw":20.274}]},"base":{"converged":true,"load_mw":37.12,"served_load_mw":37.12,"n_bus":179,"min_vm":0.97562,"max_loading":85.5,"max_line_loading_pct":57.8,"worst_vm_bus":190,"n_violations":0,"trafos":[{"index":114,"sn_mva":25.0,"loading_pct":70.87,"p_hv_mw":17.27,"from_bus":58,"to_bus":39},{"index":142,"sn_mva":25.0,"loading_pct":85.5,"p_hv_mw":20.86,"from_bus":318,"to_bus":319}]},"policy":{"violation_definition":"bus |V| outside 0.94-1.06 p.u. or any line/transformer loading > 100%","new_load_cos_phi":0.98,"new_load_q_per_mw":0.2031,"limits":{"vmin_pu":0.94,"vmax_pu":1.06,"loading_pct":100.0}},"headroom":[{"bus":73,"area":114,"base_load_mw":0.63,"base_vm_pu":1.0075,"headroom_mw":6.6,"binds":"transformer thermal (>100%)"},{"bus":80,"area":114,"base_load_mw":0.63,"base_vm_pu":1.0051,"headroom_mw":6.55,"binds":"transformer thermal (>100%)"},{"bus":119,"area":114,"base_load_mw":0.63,"base_vm_pu":1.005,"headroom_mw":6.54,"binds":"transformer thermal (>100%)"},{"bus":118,"area":114,"base_load_mw":0.63,"base_vm_pu":1.0032,"headroom_mw":6.01,"binds":"line thermal (>100%)"},{"bus":223,"area":114,"base_load_mw":0.63,"base_vm_pu":0.9798,"headroom_mw":3.47,"binds":"voltage (outside 0.94-1.06 pu)"},{"bus":196,"area":142,"base_load_mw":0.63,"base_vm_pu":1.0154,"headroom_mw":3.23,"binds":"transformer thermal (>100%)"},{"bus":269,"area":142,"base_load_mw":0.63,"base_vm_pu":1.014,"headroom_mw":3.22,"binds":"transformer thermal (>100%)"},{"bus":189,"area":114,"base_load_mw":0.63,"base_vm_pu":0.9771,"headroom_mw":3.21,"binds":"voltage (outside 0.94-1.06 pu)"},{"bus":290,"area":142,"base_load_mw":0.63,"base_vm_pu":1.0122,"headroom_mw":3.21,"binds":"transformer thermal (>100%)"},{"bus":201,"area":142,"base_load_mw":0.63,"base_vm_pu":0.9954,"headroom_mw":3.04,"binds":"transformer thermal (>100%)"},{"bus":236,"area":142,"base_load_mw":0.63,"base_vm_pu":0.9941,"headroom_mw":3.02,"binds":"transformer thermal (>100%)"},{"bus":169,"area":142,"base_load_mw":0.63,"base_vm_pu":0.9901,"headroom_mw":3.01,"binds":"transformer thermal (>100%)"},{"bus":167,"area":142,"base_load_mw":0.63,"base_vm_pu":0.9847,"headroom_mw":2.95,"binds":"transformer thermal (>100%)"},{"bus":65,"area":114,"base_load_mw":0.63,"base_vm_pu":0.9757,"headroom_mw":2.88,"binds":"voltage (outside 0.94-1.06 pu)"},{"bus":190,"area":114,"base_load_mw":0.63,"base_vm_pu":0.9756,"headroom_mw":2.84,"binds":"voltage (outside 0.94-1.06 pu)"}],"portfolio":{"source":"results/loop.json","sha256":"bbed112562dc","n_sites":32,"total_mw":85.39,"top5_ids":["S05-1","S03-4","S06-2","S02-1","S05-2"],"top5_mw":[8.5,7.0,5.75,5.5,5.0],"note":"top-5 sites by MW from results/loop.json"},"case":{"label":"5 largest agent sites (as committed)","loads_mw":[8.5,7.0,5.75,5.5,5.0],"buses":[73,196,80,269,119],"converged":true,"total_mw":31.75,"max_line_loading_pct":147.03,"max_loading_pct":159.5,"min_vm_pu":0.921,"n_violations":71,"n_voltage_violations":63,"n_thermal_violations":8,"voltage_violation_buses":[32,34,36,38,40,42,44,46,48,50,51,53,56,57,64,65,76,79,82,84,94,95,98,100,102,107,109,111,116,136,138,141,147,149,161,162,170,173,174,189,190,192,194,195,201,205,207,210,213,215,216,219,221,223,224,227,229,231,236,237,238,239,247],"thermal_violations":[{"kind":"line","index":27,"from_bus":269,"to_bus":196,"loading_pct":102.02},{"kind":"line","index":28,"from_bus":196,"to_bus":74,"loading_pct":141.46},{"kind":"line","index":36,"from_bus":289,"to_bus":72,"loading_pct":145.96},{"kind":"line","index":37,"from_bus":289,"to_bus":75,"loading_pct":144.25},{"kind":"line","index":54,"from_bus":30,"to_bus":72,"loading_pct":147.03},{"kind":"line","index":151,"from_bus":74,"to_bus":75,"loading_pct":143.19},{"kind":"trafo","index":114,"from_bus":58,"to_bus":39,"loading_pct":159.5},{"kind":"trafo","index":142,"from_bus":318,"to_bus":319,"loading_pct":144.65}],"worst_vm_bus":190,"run_ms":16.0,"status":"converged-with-violations"},"stress_case":{"label":"top-5 sites at scale=1.5 (stress)","scale":1.5,"loads_mw":[12.75,10.5,8.625,8.25,7.5],"buses":[73,196,80,269,119],"converged":true,"total_mw":47.625,"max_line_loading_pct":200.36,"max_loading_pct":209.57,"min_vm_pu":0.88385,"n_violations":137,"n_voltage_violations":122,"n_thermal_violations":15,"voltage_violation_buses":[31,32,33,34,35,36,37,38,40,41,42,43,44,45,46,47,48,49,50,51,52,53,55,56,57,64,65,71,72,73,74,75,76,77,78,79,80,81,82,83,84,94,95,98,100,101,102,103,104,106,107,108,109,110,111,116,117,118,119,120,132,134,136,137,138,141,142,143,145,146,147,148,149,150,153,155,157,159,161,162,167,170,173,174,178,181,184,186,189,190,192,194,195,196,197,198,199,200,201,205,207,210,213,215,216,219,221,223,224,227,229,231,235,236,237,238,239,247,269,289,316,317],"thermal_violations":[{"kind":"line","index":27,"from_bus":269,"to_bus":196,"loading_pct":130.54},{"kind":"line","index":28,"from_bus":196,"to_bus":74,"loading_pct":194.59},{"kind":"line","index":36,"from_bus":289,"to_bus":72,"loading_pct":199.26},{"kind":"line","index":37,"from_bus":289,"to_bus":75,"loading_pct":197.49},{"kind":"line","index":52,"from_bus":29,"to_bus":30,"loading_pct":130.76},{"kind":"line","index":53,"from_bus":126,"to_bus":29,"loading_pct":130.75},{"kind":"line","index":54,"from_bus":30,"to_bus":72,"loading_pct":200.36},{"kind":"line","index":62,"from_bus":319,"to_bus":126,"loading_pct":130.75},{"kind":"line","index":151,"from_bus":74,"to_bus":75,"loading_pct":196.38},{"kind":"line","index":157,"from_bus":86,"to_bus":71,"loading_pct":102.89},{"kind":"line","index":158,"from_bus":71,"to_bus":73,"loading_pct":101.72},{"kind":"line","index":162,"from_bus":80,"to_bus":39,"loading_pct":124.46},{"kind":"line","index":165,"from_bus":39,"to_bus":86,"loading_pct":102.89},{"kind":"trafo","index":114,"from_bus":58,"to_bus":39,"loading_pct":209.57},{"kind":"trafo","index":142,"from_bus":318,"to_bus":319,"loading_pct":178.27}],"worst_vm_bus":190,"run_ms":16.6,"status":"converged-with-violations"},"class_case":{"label":"5 sites x 4-6 MW load class (20.8 MW)","loads_mw":[4.5,3.2,6.0,2.1,5.0],"buses":[73,196,80,269,119],"converged":true,"total_mw":20.8,"max_line_loading_pct":94.23,"max_loading_pct":141.54,"min_vm_pu":0.92959,"n_violations":20,"n_voltage_violations":18,"n_thermal_violations":2,"voltage_violation_buses":[36,42,44,46,48,50,51,53,56,57,64,65,79,82,84,189,190,192],"thermal_violations":[{"kind":"trafo","index":114,"from_bus":58,"to_bus":39,"loading_pct":141.54},{"kind":"trafo","index":142,"from_bus":318,"to_bus":319,"loading_pct":109.56}],"worst_vm_bus":190,"status":"converged-with-violations"},"feasible_case":{"label":"largest uniform scale of the top-5 portfolio with 0 violations","scale":0.2581,"loads_mw":[2.194,1.807,1.484,1.42,1.291],"buses":[73,196,80,269,119],"converged":true,"total_mw":8.195,"max_line_loading_pct":75.8,"max_loading_pct":99.99,"min_vm_pu":0.96345,"n_violations":0,"n_voltage_violations":0,"n_thermal_violations":0,"voltage_violation_buses":[],"thermal_violations":[],"worst_vm_bus":190,"run_ms":15.3,"status":"converged-zero-violations"},"first_violation":{"scale":0.2658,"total_mw":8.441,"converged":true,"max_loading_pct":100.44,"min_vm_pu":0.96306,"n_violations":1,"n_voltage_violations":0,"n_thermal_violations":1,"voltage_violation_buses":[],"thermal_violations":[{"kind":"trafo","index":142,"from_bus":318,"to_bus":319,"loading_pct":100.44}],"worst_vm_bus":190,"status":"converged-with-violations"},"collapse":{"max_converged_scale":2.9297,"total_mw":93.018,"converged":true,"min_vm_pu":0.59641,"max_loading_pct":470.99,"n_violations":193,"worst_vm_bus":190,"status":"converged-with-violations"},"single_site_case":{"label":"a single 4.5 MW site at the feeder's best bus","bus":73,"headroom_at_bus_mw":6.6,"converged":true,"total_mw":4.5,"max_line_loading_pct":58.25,"max_loading_pct":90.58,"min_vm_pu":0.96743,"n_violations":0,"n_voltage_violations":0,"n_thermal_violations":0,"voltage_violation_buses":[],"thermal_violations":[],"worst_vm_bus":223,"run_ms":16.6,"status":"converged-zero-violations"},"voltage_profile":{"order":"buses ordered by base-case voltage","buses":[190,36,65,64,79,82,189,51,42,48,50,223,227,231,229,224,84,56,38,44,161,162,192,174,173,57,159,155,157,316,53,153,200,184,198,186,181,199,46,167,197,107,32,98,100,102,178,76,34,94,176,95,285,288,286,287,137,132,275,169,134,147,149,141,138,235,142,111,116,170,136,237,247,45,40,219,236,239,221,238,47,109,83,201,49,213,52,194,150,54,207,205,144,210,215,216,195,143,146,172,41,140,131,37,317,145,133,58,318,188,129,85,305,271,281,55,313,312,315,273,248,168,246,43,120,81,314,118,148,301,117,303,77,304,119,80,35,33,298,78,253,73,3,245,171,8,1,244,0,71,106,104,4,2,243,241,103,242,240,110,31,290,108,86,269,39,196,5,7,101,74,75,289,72,30,6,29,126,319],"base_vm":[0.97562,0.97566,0.97567,0.97576,0.97591,0.97608,0.97708,0.97789,0.97829,0.97917,0.9792,0.97979,0.97983,0.97997,0.98008,0.9802,0.98077,0.98108,0.98126,0.98164,0.98165,0.98199,0.98211,0.98223,0.9825,0.98302,0.98328,0.9833,0.98332,0.98337,0.98357,0.98393,0.98406,0.98419,0.98429,0.98433,0.98437,0.98444,0.98462,0.98469,0.98505,0.98555,0.98588,0.98594,0.98597,0.9864,0.98666,0.98702,0.98705,0.98714,0.9875,0.9878,0.9879,0.98825,0.98853,0.98878,0.98889,0.9899,0.99006,0.99009,0.9906,0.99089,0.99092,0.99104,0.9914,0.99146,0.99148,0.99152,0.99155,0.99159,0.99185,0.99235,0.9934,0.99383,0.9939,0.9941,0.99413,0.99423,0.99447,0.99457,0.99481,0.99511,0.99515,0.99542,0.99553,0.99574,0.99589,0.99606,0.99661,0.99671,0.99684,0.99699,0.99726,0.99757,0.9976,0.99767,0.99832,0.99857,0.9986,0.99863,0.99871,0.99922,0.99922,0.99979,0.99982,0.99988,0.99992,1.0,1.0,1.00015,1.00019,1.00077,1.00114,1.00115,1.00135,1.00155,1.00162,1.00165,1.00172,1.00175,1.00194,1.00222,1.00267,1.00277,1.0028,1.00283,1.00307,1.00325,1.0033,1.00364,1.00401,1.00404,1.00452,1.00464,1.00503,1.00511,1.00541,1.00541,1.00575,1.00628,1.00653,1.00749,1.00861,1.00863,1.00868,1.00891,1.00935,1.00937,1.00947,1.00971,1.00992,1.00997,1.01002,1.01031,1.01033,1.01082,1.01098,1.01142,1.01161,1.01211,1.01212,1.01216,1.01308,1.01336,1.01398,1.0146,1.01542,1.01556,1.01559,1.01605,1.01606,1.01736,1.01851,1.01924,1.02104,1.02355,1.02367,1.0259,1.0288],"case_vm":[0.96345,0.96349,0.9635,0.96359,0.96374,0.96392,0.96493,0.96575,0.96616,0.96704,0.96708,0.96897,0.96902,0.96916,0.96926,0.96939,0.96866,0.96899,0.97047,0.96955,0.97085,0.97121,0.97003,0.97144,0.97172,0.97095,0.97722,0.97724,0.97726,0.97731,0.97151,0.97787,0.978,0.97813,0.97824,0.97827,0.97831,0.97839,0.97257,0.97864,0.979,0.9748,0.97385,0.9752,0.97523,0.97566,0.98062,0.97501,0.97504,0.97641,0.98146,0.97708,0.98187,0.98223,0.98251,0.98275,0.97819,0.97921,0.98405,0.98407,0.97991,0.97724,0.97727,0.9774,0.97776,0.98078,0.98081,0.97789,0.97791,0.97795,0.97822,0.97873,0.97979,0.98191,0.9803,0.9805,0.98054,0.98064,0.98089,0.98098,0.9829,0.98153,0.98452,0.98185,0.98364,0.98218,0.98401,0.9825,0.98473,0.99074,0.9833,0.98345,0.99129,0.98403,0.98407,0.98413,0.9848,0.98671,0.98675,0.99268,0.98813,0.99326,0.99327,0.98921,0.98632,0.98805,0.99398,1.0,1.0,0.99421,0.99425,0.99483,0.9952,0.99522,0.99541,0.98974,0.99569,0.99572,0.99579,0.99582,0.996,0.99629,0.99674,0.99224,0.99101,0.9923,0.99715,0.99146,0.99151,0.99772,0.99223,0.99813,0.994,0.99872,0.99301,0.99335,0.9949,0.992,0.99984,0.99579,1.00063,0.99701,1.00272,1.00274,1.00279,1.00302,1.00347,1.00349,1.00359,0.99997,0.99659,0.99664,1.00414,1.00443,1.00445,1.00495,0.99767,1.00555,1.00575,0.99881,0.99883,1.0063,0.9998,1.00479,1.00071,1.00643,1.00252,1.00973,1.00976,1.00349,1.0035,1.00547,1.0072,1.00829,1.01095,1.01779,1.01505,1.01853,1.02309],"case_label":"+8.2 MW (feeder limit, 0 violations)","limits":[0.94,1.06]},"branch_loading":[{"kind":"trafo","label":"T142 110/20 kV","index":142,"from_bus":318,"to_bus":319,"loading_pct":99.99},{"kind":"trafo","label":"T114 110/20 kV","index":114,"from_bus":58,"to_bus":39,"loading_pct":92.69},{"kind":"line","label":"L54 30-72","index":54,"from_bus":30,"to_bus":72,"loading_pct":75.8},{"kind":"line","label":"L36 289-72","index":36,"from_bus":289,"to_bus":72,"loading_pct":74.77},{"kind":"line","label":"L37 289-75","index":37,"from_bus":289,"to_bus":75,"loading_pct":73.12},{"kind":"line","label":"L151 74-75","index":151,"from_bus":74,"to_bus":75,"loading_pct":72.1},{"kind":"line","label":"L28 196-74","index":28,"from_bus":196,"to_bus":74,"loading_pct":70.44},{"kind":"line","label":"L27 269-196","index":27,"from_bus":269,"to_bus":196,"loading_pct":64.27}],"timing":{"base_pf_ms":15.8,"check_portfolio_ms":15.3,"headroom_s":5.51,"full_report_s":7.26},"caveats":["mv_oberrhein is a real German 20 kV MV network shipped with pandapower (Oberrhein region). Assigning our synthetic sites to its buses is an illustration of the load class, not a claim about a specific project site.","The public case scales its loads to 0.6 of nameplate: 61.86 MW nameplate = 37.12 MW actually served in the power flow.","Violation = bus voltage outside 0.94-1.06 p.u. or any line/transformer above 100% of rating. New loads are constant power with cos(phi)=0.98 and no voltage support.","The two 110/20 kV, 25 MVA transformers are the binding constraint: the feeder's spare capacity is set by them (70.9% and 85.5% loaded at base), not by the 20 kV line ratings.","Headroom per bus is not additive: each bus is tested alone against the shared transformer capacity, so summing per-bus values overstates what the feeder can host at once.","The portfolio snapshot is read from results/loop.json at run time (sha256 prefix in portfolio.sha256); rerun sim/powerflow.py after the agent loop changes the portfolio.","Deterministic on the measured stack (Python 3.9.6, pandapower 3.2.2, numpy 2.0.2, scipy 1.13.1); no network access."]};
+const base = D.base, info = D.feeder_info, pol = D.policy;
+const fmt = (x, n) => (x === null || x === undefined || Number.isNaN(x)) ? 'n/a' : Number(x).toFixed(n);
+const pct = x => fmt(x, 1) + '%';
+const pu = x => fmt(x, 4) + ' p.u.';
+const areaName = a => a === info.areas[0].trafo ? 'A' : 'B';
+
+function svg(tag, attrs, parent) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+}
+
+/* ---------- header + KPI cards ---------- */
+document.getElementById('subtitle').textContent =
+  'pandapower.networks.mv_oberrhein - a real 20 kV German MV network: ' + info.n_bus +
+  ' buses, ' + info.n_line + ' lines, ' + info.n_trafo + ' x ' + info.trafo_mva +
+  ' MVA 110/20 kV transformers. Served load ' + fmt(base.served_load_mw,1) +
+  ' MW (' + fmt(info.nominal_load_mw,1) + ' MW nameplate x ' + fmt(info.load_scaling,1) +
+  ' scaling). Every number on this page is from one measured AC power flow run.';
+
+const feas = D.feasible_case, single = D.single_site_case, collapse = D.collapse;
+const maxHr = Math.max(...D.headroom.map(r => r.headroom_mw));
+const kpis = [
+  {k:'Base feeder', v:fmt(base.min_vm,4)+' p.u.', c:'good',
+   d:'AC PF converged, 0 violations - min V, max loading ' + pct(base.max_loading) + ' (transformer)'},
+  {k:'Buses with headroom', v:D.headroom.filter(r=>true).length + ' / ' + D.headroom.length, c:'',
+   d:'per-bus headroom ' + fmt(Math.min(...D.headroom.map(r=>r.headroom_mw)),2) + '-' +
+     fmt(maxHr,2) + ' MW; transformer-limited'},
+  {k:'Feeder spare capacity', v:fmt(feas.total_mw,1)+' MW', c:'good',
+   d:'largest tested load with AC PF converged and 0 violations'},
+  {k:'Our 5 largest sites', v:fmt(D.case.total_mw,1)+' MW', c:'bad',
+   d:'AC PF ' + (D.case.converged ? 'converged with ' + D.case.n_violations + ' violations' : 'does NOT converge (voltage collapse)')},
+];
+const kpiBox = document.getElementById('kpis');
+kpis.forEach(x => {
+  const b = el('div', 'kpi ' + x.c);
+  b.appendChild(el('div','k',' ')); b.firstChild.textContent = x.k;
+  const v = el('div','v'); v.textContent = x.v; b.appendChild(v);
+  const d = el('div','d'); d.textContent = x.d; b.appendChild(d);
+  kpiBox.appendChild(b);
+});
+
+/* ---------- verdicts ---------- */
+const vBox = document.getElementById('verdicts');
+function verdict(cls, tag, head, det) {
+  const v = el('div', 'verdict ' + cls);
+  v.appendChild(el('div','tag',tag));
+  const h = el('div','head'); h.textContent = head; v.appendChild(h);
+  const d = el('div','det'); d.innerHTML = det; v.appendChild(d);
+  vBox.appendChild(v);
+}
+verdict('ok', 'Verified AC power flow',
+  'CONVERGED &middot; 0 violations'.replace('&middot;','·'),
+  'At <b>' + fmt(feas.total_mw,1) + ' MW</b> of new load (' + fmt(feas.scale*100,0) + '% of the top-5 portfolio, sited on the best-headroom buses) ' +
+  'the AC power flow converges with zero violations: <b>min V = ' + pu(feas.min_vm_pu) + '</b>, ' +
+  '<b>max loading = ' + pct(feas.max_loading_pct) + '</b>, ' + feas.n_violations + ' violations.');
+verdict('bad', 'Our portfolio vs one real feeder',
+  'DOES NOT FIT &middot; voltage collapse'.replace('&middot;','·'),
+  'The five largest sites total <b>' + fmt(D.case.total_mw,1) + ' MW</b> — ' +
+  fmt(D.case.total_mw / feas.total_mw, 1) + 'x the feeder\'s spare capacity of ' + fmt(feas.total_mw,1) + ' MW. ' +
+  'AC PF ' + (D.case.converged ? 'converges with ' + D.case.n_violations + ' violations' : 'does not converge (voltage collapse)') +
+  '. At <b>scale 1.5 (' + fmt(D.stress_case.total_mw,1) + ' MW)</b>: ' +
+  (D.stress_case.converged ? fmt(D.stress_case.n_violations,0) + ' violations' : 'diverges') + '.');
+
+/* ---------- headroom table ---------- */
+document.getElementById('hrNote').textContent =
+  'Largest added load at a single bus that keeps AC PF converged with zero violations. ' +
+  '15 load-centre buses (' + info.areas.map(a => 'sub-area ' + areaName(a.trafo) + ' / T' + a.trafo +
+  ': ' + fmt(a.served_load_mw,1) + ' MW served').join('; ') + '). ' +
+  'Headroom is limited by the shared 25 MVA transformers, so per-bus values are NOT additive.';
+const hrBody = document.querySelector('#hrTable tbody');
+D.headroom.forEach(r => {
+  const tr = el('tr');
+  const cells = [String(r.bus), 'Sub-area ' + areaName(r.area) + ' (T' + r.area + ')',
+                 fmt(r.base_load_mw,2), fmt(r.base_vm_pu,4), fmt(r.headroom_mw,2)];
+  cells.forEach((c,i) => {
+    const td = el('td', i >= 2 ? 'r' : ''); td.textContent = c; tr.appendChild(td);
+  });
+  const barTd = el('td'); const bar = el('div','bar');
+  const fill = el('i'); fill.style.width = (100*r.headroom_mw/maxHr).toFixed(1) + '%';
+  if (r.headroom_mw < maxHr*0.6) fill.className = 'hot';
+  bar.appendChild(fill); barTd.appendChild(bar); tr.appendChild(barTd);
+  const bd = el('td'); const pill = el('span','pill ' + (/transformer/.test(r.binds) ? 'a' : ''));
+  pill.textContent = r.binds; bd.appendChild(pill); tr.appendChild(bd);
+  hrBody.appendChild(tr);
+});
+
+/* ---------- voltage profile chart ---------- */
+(function voltageChart() {
+  const prof = D.voltage_profile, W = 1300, H = 430, L = 62, R = 22, T = 26, B = 46;
+  const iw = W - L - R, ih = H - T - B;
+  const all = prof.base_vm.concat(prof.case_vm);
+  const lo = Math.min(0.94, Math.min(...all) - 0.01);
+  const hi = Math.max(1.01, Math.max(...all) + 0.005);
+  const n = prof.buses.length;
+  const x = i => L + (n === 1 ? 0 : i/(n-1)*iw);
+  const y = v => T + (hi - v)/(hi - lo)*ih;
+  const root = svg('svg', {viewBox:'0 0 '+W+' '+H, width:'100%', role:'img',
+                           'aria-label':'bus voltage profile before and after added load'});
+  document.getElementById('voltChart').appendChild(root);
+  // y grid
+  const ticks = [0.94, 0.96, 0.98, 1.00, 1.02, 1.04].filter(v => v >= lo && v <= hi);
+  ticks.forEach(v => {
+    svg('line', {x1:L, y1:y(v), x2:W-R, y2:y(v), stroke:'#1b2a43', 'stroke-width':1}, root);
+    const t = svg('text', {x:L-10, y:y(v)+5, fill:'#93a4bf', 'font-size':14, 'text-anchor':'end'}, root);
+    t.textContent = v.toFixed(2);
+  });
+  // limits
+  svg('line', {x1:L, y1:y(0.94), x2:W-R, y2:y(0.94), stroke:'#ff5f63', 'stroke-width':1.6,
+               'stroke-dasharray':'7 6', opacity:.8}, root);
+  const lim = svg('text', {x:W-R, y:y(0.94)-8, fill:'#ff8b8e', 'font-size':14, 'text-anchor':'end'}, root);
+  lim.textContent = 'lower limit 0.94 p.u.';
+  // x labels
+  [0, Math.floor(n*0.25), Math.floor(n*0.5), Math.floor(n*0.75), n-1].forEach(i => {
+    const t = svg('text', {x:x(i), y:H-14, fill:'#93a4bf', 'font-size':14, 'text-anchor':'middle'}, root);
+    t.textContent = 'bus ' + prof.buses[i];
+  });
+  const path = vals => vals.map((v,i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+  svg('path', {d:path(prof.base_vm), fill:'none', stroke:'#5f7fb0', 'stroke-width':2.4, opacity:.95}, root);
+  svg('path', {d:path(prof.case_vm), fill:'none', stroke:'#35d98f', 'stroke-width':2.8}, root);
+  // min markers
+  const iMinBase = prof.base_vm.indexOf(Math.min(...prof.base_vm));
+  const iMinCase = prof.case_vm.indexOf(Math.min(...prof.case_vm));
+  svg('circle', {cx:x(iMinBase), cy:y(prof.base_vm[iMinBase]), r:4, fill:'#5f7fb0'}, root);
+  svg('circle', {cx:x(iMinCase), cy:y(prof.case_vm[iMinCase]), r:5, fill:'#35d98f'}, root);
+  const t1 = svg('text', {x:x(iMinBase)+9, y:y(prof.base_vm[iMinBase])+18, fill:'#a9bcd8', 'font-size':14}, root);
+  t1.textContent = 'base min ' + fmt(prof.base_vm[iMinBase],4);
+  const t2 = svg('text', {x:x(iMinCase)+9, y:y(prof.case_vm[iMinCase])-10, fill:'#8ff0bf', 'font-size':14}, root);
+  t2.textContent = 'with ' + fmt(feas.total_mw,1) + ' MW: ' + fmt(prof.case_vm[iMinCase],4);
+  // legend
+  const lg = document.getElementById('voltLegend');
+  lg.innerHTML = '<span><i class="sw" style="background:#5f7fb0"></i>base case (' + n + ' buses)</span>' +
+    '<span><i class="sw" style="background:#35d98f"></i>' + prof.case_label + '</span>' +
+    '<span><i class="sw" style="background:#ff5f63"></i>limit 0.94 p.u.</span>';
+  document.getElementById('voltNote').textContent =
+    'Each point is one bus in a real AC power flow; ' + prof.order + '. ' +
+    'The case curve uses the largest load that still passes (' + fmt(feas.total_mw,1) + ' MW, ' + feas.n_violations + ' violations). ' +
+    'Adding ' + fmt(D.case.total_mw,1) + ' MW is not plotted because the solver no longer converges.';
+})();
+
+/* ---------- branch loading chart ---------- */
+(function loadingChart() {
+  const rows = D.branch_loading.slice().sort((a,b) => b.loading_pct - a.loading_pct);
+  const W = 1300, rowH = 40, L = 210, R = 130, T = 16, B = 10;
+  const H = T + rows.length*rowH + B;
+  const max = Math.max(110, Math.ceil(Math.max(...rows.map(r => r.loading_pct))/10)*10);
+  const iw = W - L - R;
+  const root = svg('svg', {viewBox:'0 0 '+W+' '+H, width:'100%', role:'img',
+                           'aria-label':'branch loading after added load'});
+  document.getElementById('loadChart').appendChild(root);
+  const x = v => L + v/max*iw;
+  [0, 20, 40, 60, 80, 100].forEach(v => {
+    if (v > max) return;
+    svg('line', {x1:x(v), y1:T, x2:x(v), y2:H-B, stroke:'#17243a', 'stroke-width':1}, root);
+    const t = svg('text', {x:x(v), y:H-2, fill:'#7f90ab', 'font-size':13, 'text-anchor':'middle'}, root);
+    t.textContent = v + '%';
+  });
+  svg('line', {x1:x(100), y1:T, x2:x(100), y2:H-B, stroke:'#ff5f63', 'stroke-width':1.8,
+               'stroke-dasharray':'7 6'}, root);
+  const lim = svg('text', {x:x(100)+8, y:T+16, fill:'#ff8b8e', 'font-size':14}, root);
+  lim.textContent = 'rating 100%';
+  rows.forEach((r, i) => {
+    const cy = T + i*rowH + rowH/2;
+    const lab = svg('text', {x:L-12, y:cy+5, fill:'#cdd8ea', 'font-size':15, 'text-anchor':'end'}, root);
+    lab.textContent = r.label;
+    const col = r.loading_pct > 100.05 ? '#ff5f63' : (r.loading_pct > 90 ? '#ffb347' : '#35d98f');
+    svg('rect', {x:L, y:cy-11, width:Math.max(2, x(r.loading_pct)-L), height:22, rx:6, fill:col, opacity:.9}, root);
+    const val = svg('text', {x:x(r.loading_pct)+10, y:cy+5, fill:'#e9eef8', 'font-size':15, 'font-weight':600}, root);
+    val.textContent = pct(r.loading_pct) + (r.kind === 'trafo' ? '  (transformer)' : '');
+  });
+  document.getElementById('loadNote').textContent =
+    'Branch loading at ' + fmt(feas.total_mw,1) + ' MW of added load (the last point with zero violations). ' +
+    'The 110/20 kV transformers, not the 20 kV lines, sit closest to their rating: this feeder has ' +
+    fmt(feas.total_mw,1) + ' MW of spare capacity for our load class.';
+})();
+
+/* ---------- case placement table ---------- */
+const caseBody = document.querySelector('#caseTable tbody');
+const hrByBus = Object.fromEntries(D.headroom.map(r => [r.bus, r]));
+const siteIds = D.portfolio.top5_ids || [];
+(D.case.loads_mw || []).forEach((mw, i) => {
+  const bus = D.case.buses[i], hr = hrByBus[bus];
+  const tr = el('tr');
+  const over = hr && mw > hr.headroom_mw;
+  [ (siteIds[i] || ('site ' + (i+1))), String(bus), 'Sub-area ' + areaName(hr ? hr.area : D.case.buses[i] ? 0 : 0),
+    fmt(mw,2), hr ? fmt(hr.headroom_mw,2) : 'n/a' ].forEach((c,j) => {
+    const td = el('td', j >= 3 ? 'r' : ''); td.textContent = c; tr.appendChild(td);
+  });
+  const td = el('td');
+  const pill = el('span','pill ' + (over ? 'r' : 'g'));
+  pill.textContent = over ? (D.case.converged ? 'exceeds bus headroom' : 'contributes to collapse') : 'within headroom';
+  td.appendChild(pill); tr.appendChild(td);
+  caseBody.appendChild(tr);
+});
+document.getElementById('caseNote').textContent =
+  'Buses are the five best-headroom feeder buses, alternating between the two MV sub-areas (best-case siting). ' +
+  'Site MW are the five largest connected sites in the agent portfolio (' + (D.portfolio.source || 'n/a') +
+  ', sha256 ' + (D.portfolio.sha256 || 'n/a') + '; portfolio total ' + fmt(D.portfolio.total_mw,1) + ' MW).';
+
+/* ---------- what breaks ---------- */
+const bl = document.getElementById('breakList');
+function li(html) { const x = el('li'); x.innerHTML = html; bl.appendChild(x); }
+li('Feeder spare capacity (AC): <b>' + fmt(feas.total_mw,1) + ' MW</b> at scale ' + fmt(feas.scale,3) +
+   ' — min V <b>' + pu(feas.min_vm_pu) + '</b>, max loading <b>' + pct(feas.max_loading_pct) + '</b>, 0 violations.');
+li('First violation just above it: <b>' + fmt(D.first_violation.total_mw,1) + ' MW</b> — ' +
+   (D.first_violation.thermal_violations.length ? ('transformer/line above 100% (' +
+     pct(D.first_violation.thermal_violations[0].loading_pct) + ')') : 'voltage limit') +
+   (D.first_violation.voltage_violation_buses.length ? ', ' + D.first_violation.voltage_violation_buses.length + ' bus(es) outside 0.94-1.06 p.u.' : '') + '.');
+li('Top-5 sites at <b>' + fmt(D.case.total_mw,1) + ' MW</b>: ' +
+   (D.case.converged ? (D.case.n_violations + ' violations; min V ' + pu(D.case.min_vm_pu)) :
+    '<b>AC PF diverges => voltage collapse</b>') + '.');
+li('Stress case, scale 1.5 = <b>' + fmt(D.stress_case.total_mw,1) + ' MW</b>: ' +
+   (D.stress_case.converged ? (D.stress_case.n_violations + ' violations') : '<b>AC PF diverges</b>') + '.');
+li('Last converged point: <b>' + fmt(collapse.total_mw,1) + ' MW</b> at scale ' + fmt(collapse.max_converged_scale,3) +
+   ' — min V <b>' + pu(collapse.min_vm_pu) + '</b>, max loading ' + pct(collapse.max_loading_pct) +
+   ', ' + fmt(collapse.n_violations,0) + ' violations.');
+li('Per-site class check: one <b>' + fmt(single.total_mw,1) + ' MW</b> site at bus ' + single.bus +
+   ' → ' + (single.converged ? 'converged, 0 violations' : 'not converged') +
+   ', min V ' + pu(single.min_vm_pu) + ', max loading ' + pct(single.max_loading_pct) + '.');
+li('Even the explicit 5 x 4-6 MW class case (' + fmt(D.class_case.total_mw,1) + ' MW) ' +
+   (D.class_case.converged ? ('converges with ' + D.class_case.n_violations + ' violations') :
+   'does not converge') + ' — one 20 kV feeder is not sized for five data-centre loads.');
+
+/* ---------- caveats ---------- */
+const cav = document.getElementById('caveats');
+D.caveats.forEach(c => { const x = el('li'); x.textContent = c; cav.appendChild(x); });
+</script>
+</body>
+</html>

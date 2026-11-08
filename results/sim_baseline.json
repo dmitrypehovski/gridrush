@@ -1,7 +1,7 @@
 {
  "meta": {
   "project": "GRIDRUSH",
-  "generated_at": "2026-11-09T04:34:46",
+  "generated_at": "2026-11-09T04:36:46",
   "region": "CAL",
   "region_name": "CAISO",
   "horizon_months": 36,
@@ -15,7 +15,7 @@
    "MISO"
   ],
   "data": "real 2025 EIA-930 hourly shape (12 BA extract); synthetic site geometry and interconnection timelines, parameters documented in sim/assumptions.md",
-  "wall_s": 0.12
+  "wall_s": 0.14
  },
  "regions": [
   {

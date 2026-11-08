@@ -1,7 +1,7 @@
 {
  "meta": {
   "project": "GRIDRUSH",
-  "generated_at": "2026-11-09T04:25:54",
+  "generated_at": "2026-11-09T04:37:09",
   "region": "CAL",
   "region_name": "CAISO",
   "horizon_months": 36,
@@ -9,12 +9,81 @@
   "n_substations": 8,
   "assumptions_version": 1,
   "loop": {
-   "iters": 180,
+   "iters": 60,
    "seed": 0,
-   "wall_s": 3.34,
-   "n_evals": 181,
+   "wall_s": 2.52,
+   "n_evals": 61,
    "init_preset": "random",
-   "proposer": "parametric mutator (RSI loop)"
+   "proposer": "parametric mutator + LLM proposer (archive keeps the best)",
+   "llm": {
+    "policy_file": "rsi_agent/gen_6.py",
+    "generations": [
+     {
+      "gen": 0,
+      "score": 190.223,
+      "net_value_musd": 202.399,
+      "delivered_mwmonths": 2050.26,
+      "mw_at_month12": 69.85,
+      "kept": false,
+      "change": "reference: PARAMS = best.params from results/loop.json (snapshot 04:24; 9 decoded values inverted back to [0,1] in PARAM_NAMES order). Scored 202.3988 then. loo"
+     },
+     {
+      "gen": 1,
+      "score": 269.6358,
+      "net_value_musd": 269.636,
+      "delivered_mwmonths": 2494.56,
+      "mw_at_month12": 84.4,
+      "kept": false,
+      "change": "own logic: per-substation greedy over exact breakpoints of the residual headroom curve, per-site best (mw, SLA) by 0.10*mult*mw*(36-T)*avail. Battery candidates"
+     },
+     {
+      "gen": 2,
+      "score": 269.6358,
+      "net_value_musd": 269.636,
+      "delivered_mwmonths": 2494.56,
+      "mw_at_month12": 84.4,
+      "kept": false,
+      "change": "exact per-substation coordinate ascent on (mw, SLA) + restarts; same value as gen_1 (it is a strict local optimum) -- the gap is a 2-site coordination move, not"
+     },
+     {
+      "gen": 3,
+      "score": 277.2083,
+      "net_value_musd": 277.208,
+      "delivered_mwmonths": 2468.39,
+      "mw_at_month12": 84.65,
+      "kept": false,
+      "change": "tier construction: substation capacity split into 3 price layers (99.99% -> min H keeps x1.25, 99.9% -> 8th-lowest hour x1.00, 99% -> 87th x0.80), each layer to"
+     },
+     {
+      "gen": 4,
+      "score": 115.3629,
+      "net_value_musd": 115.363,
+      "delivered_mwmonths": 1051.98,
+      "mw_at_month12": 36.28,
+      "kept": false,
+      "change": "FAILED: DP over cumulative MW prefixes, but candidates were only sorted(H)[k] breakpoints; on S02 (min headroom 10.5 MW > first site max_mw 5.5) no feasible pre"
+     },
+     {
+      "gen": 5,
+      "score": 277.1048,
+      "net_value_musd": 277.105,
+      "delivered_mwmonths": 2466.96,
+      "mw_at_month12": 84.58,
+      "kept": false,
+      "change": "DP fixed: candidates = headroom breakpoints + nameplate prefix sums + a+sorted(H)[k], plus mw>=0.5 constraint; exact optimum per substation (DP value 280.28) bu"
+     },
+     {
+      "gen": 6,
+      "score": 279.9082,
+      "net_value_musd": 279.908,
+      "delivered_mwmonths": 2490.58,
+      "mw_at_month12": 85.39,
+      "kept": true,
+      "change": "FINAL: same exact DP + repair-friendly MW offset (+0.0049) so repair_portfolio's floor lands on the planned value. 32 flex sites, 0 violations, compliant_mwmont"
+     }
+    ],
+    "n_generations": 7
+   }
   }
  },
  "regions": [
@@ -33,8 +102,8 @@
    "y": 0.0,
    "T_firm": 32.0,
    "T_flex": 10.0,
-   "Hmax_mw": 9.38,
-   "stress_hours": 0
+   "Hmax_mw": 9.22,
+   "stress_hours": 176
   },
   {
    "id": "S01-2",
@@ -45,8 +114,8 @@
    "y": 0.0,
    "T_firm": 35.0,
    "T_flex": 6.0,
-   "Hmax_mw": 9.38,
-   "stress_hours": 7726
+   "Hmax_mw": 9.22,
+   "stress_hours": 176
   },
   {
    "id": "S01-3",
@@ -57,8 +126,8 @@
    "y": 0.0,
    "T_firm": 24.0,
    "T_flex": 7.0,
-   "Hmax_mw": 9.38,
-   "stress_hours": 194
+   "Hmax_mw": 9.22,
+   "stress_hours": 176
   },
   {
    "id": "S01-4",
@@ -69,8 +138,8 @@
    "y": 0.0,
    "T_firm": 28.0,
    "T_flex": 5.0,
-   "Hmax_mw": 9.38,
-   "stress_hours": 194
+   "Hmax_mw": 9.22,
+   "stress_hours": 176
   },
   {
    "id": "S01-5",
@@ -81,8 +150,8 @@
    "y": 0.0,
    "T_firm": 35.0,
    "T_flex": 7.0,
-   "Hmax_mw": 9.38,
-   "stress_hours": 3283
+   "Hmax_mw": 9.22,
+   "stress_hours": 176
   },
   {
    "id": "S02-1",
@@ -93,8 +162,8 @@
    "y": 0.0,
    "T_firm": 23.0,
    "T_flex": 5.0,
-   "Hmax_mw": 37.63,
-   "stress_hours": 0
+   "Hmax_mw": 36.92,
+   "stress_hours": 176
   },
   {
    "id": "S02-2",
@@ -105,8 +174,8 @@
    "y": 0.0,
    "T_firm": 33.0,
    "T_flex": 7.0,
-   "Hmax_mw": 37.63,
-   "stress_hours": 0
+   "Hmax_mw": 36.92,
+   "stress_hours": 176
   },
   {
    "id": "S02-3",
@@ -117,8 +186,8 @@
    "y": 0.0,
    "T_firm": 35.0,
    "T_flex": 6.0,
-   "Hmax_mw": 37.63,
-   "stress_hours": 0
+   "Hmax_mw": 36.92,
+   "stress_hours": 176
   },
   {
    "id": "S02-4",
@@ -129,8 +198,8 @@
    "y": 0.0,
    "T_firm": 30.0,
    "T_flex": 6.0,
-   "Hmax_mw": 37.63,
-   "stress_hours": 0
+   "Hmax_mw": 36.92,
+   "stress_hours": 176
   },
   {
    "id": "S02-5",
@@ -141,8 +210,8 @@
    "y": 0.0,
    "T_firm": 27.0,
    "T_flex": 10.0,
-   "Hmax_mw": 37.63,
-   "stress_hours": 0
+   "Hmax_mw": 36.92,
+   "stress_hours": 176
   },
   {
    "id": "S03-1",
@@ -153,8 +222,8 @@
    "y": 0.0,
    "T_firm": 26.0,
    "T_flex": 10.0,
-   "Hmax_mw": 24.58,
-   "stress_hours": 0
+   "Hmax_mw": 24.18,
+   "stress_hours": 176
   },
   {
    "id": "S03-2",
@@ -165,8 +234,8 @@
    "y": 0.0,
    "T_firm": 33.0,
    "T_flex": 8.0,
-   "Hmax_mw": 24.58,
-   "stress_hours": 0
+   "Hmax_mw": 24.18,
+   "stress_hours": 176
   },
   {
    "id": "S03-3",
@@ -177,8 +246,8 @@
    "y": 0.0,
    "T_firm": 23.0,
    "T_flex": 6.0,
-   "Hmax_mw": 24.58,
-   "stress_hours": 2
+   "Hmax_mw": 24.18,
+   "stress_hours": 176
   },
   {
    "id": "S03-4",
@@ -189,8 +258,8 @@
    "y": 0.0,
    "T_firm": 27.0,
    "T_flex": 5.0,
-   "Hmax_mw": 24.58,
-   "stress_hours": 0
+   "Hmax_mw": 24.18,
+   "stress_hours": 176
   },
   {
    "id": "S03-5",
@@ -201,8 +270,8 @@
    "y": 0.0,
    "T_firm": 22.0,
    "T_flex": 5.0,
-   "Hmax_mw": 24.58,
-   "stress_hours": 0
+   "Hmax_mw": 24.18,
+   "stress_hours": 176
   },
   {
    "id": "S04-1",
@@ -213,8 +282,8 @@
    "y": 0.0,
    "T_firm": 30.0,
    "T_flex": 6.0,
-   "Hmax_mw": 33.86,
-   "stress_hours": 0
+   "Hmax_mw": 33.09,
+   "stress_hours": 176
   },
   {
    "id": "S04-2",
@@ -225,8 +294,8 @@
    "y": 0.0,
    "T_firm": 27.0,
    "T_flex": 6.0,
-   "Hmax_mw": 33.86,
-   "stress_hours": 7
+   "Hmax_mw": 33.09,
+   "stress_hours": 176
   },
   {
    "id": "S04-3",
@@ -237,8 +306,8 @@
    "y": 0.0,
    "T_firm": 29.0,
    "T_flex": 6.0,
-   "Hmax_mw": 33.86,
-   "stress_hours": 0
+   "Hmax_mw": 33.09,
+   "stress_hours": 176
   },
   {
    "id": "S04-4",
@@ -249,8 +318,8 @@
    "y": 0.0,
    "T_firm": 24.0,
    "T_flex": 10.0,
-   "Hmax_mw": 33.86,
-   "stress_hours": 74
+   "Hmax_mw": 33.09,
+   "stress_hours": 176
   },
   {
    "id": "S04-5",
@@ -261,8 +330,8 @@
    "y": 0.0,
    "T_firm": 19.0,
    "T_flex": 8.0,
-   "Hmax_mw": 33.86,
-   "stress_hours": 74
+   "Hmax_mw": 33.09,
+   "stress_hours": 176
   },
   {
    "id": "S05-1",
@@ -273,8 +342,8 @@
    "y": 0.0,
    "T_firm": 29.0,
    "T_flex": 7.0,
-   "Hmax_mw": 46.12,
-   "stress_hours": 0
+   "Hmax_mw": 45.3,
+   "stress_hours": 176
   },
   {
    "id": "S05-2",
@@ -285,8 +354,8 @@
    "y": 0.0,
    "T_firm": 30.0,
    "T_flex": 5.0,
-   "Hmax_mw": 46.12,
-   "stress_hours": 0
+   "Hmax_mw": 45.3,
+   "stress_hours": 176
   },
   {
    "id": "S05-3",
@@ -297,8 +366,8 @@
    "y": 0.0,
    "T_firm": 30.0,
    "T_flex": 10.0,
-   "Hmax_mw": 46.12,
-   "stress_hours": 0
+   "Hmax_mw": 45.3,
+   "stress_hours": 176
   },
   {
    "id": "S05-4",
@@ -309,8 +378,8 @@
    "y": 0.0,
    "T_firm": 31.0,
    "T_flex": 7.0,
-   "Hmax_mw": 46.12,
-   "stress_hours": 0
+   "Hmax_mw": 45.3,
+   "stress_hours": 176
   },
   {
    "id": "S05-5",
@@ -321,8 +390,8 @@
    "y": 0.0,
    "T_firm": 22.0,
    "T_flex": 7.0,
-   "Hmax_mw": 46.12,
-   "stress_hours": 0
+   "Hmax_mw": 45.3,
+   "stress_hours": 176
   },
   {
    "id": "S06-1",
@@ -333,8 +402,8 @@
    "y": 0.0,
    "T_firm": 25.0,
    "T_flex": 9.0,
-   "Hmax_mw": 28.4,
-   "stress_hours": 0
+   "Hmax_mw": 27.92,
+   "stress_hours": 176
   },
   {
    "id": "S06-2",
@@ -345,8 +414,8 @@
    "y": 0.0,
    "T_firm": 27.0,
    "T_flex": 7.0,
-   "Hmax_mw": 28.4,
-   "stress_hours": 0
+   "Hmax_mw": 27.92,
+   "stress_hours": 176
   },
   {
    "id": "S06-3",
@@ -357,8 +426,8 @@
    "y": 0.0,
    "T_firm": 24.0,
    "T_flex": 8.0,
-   "Hmax_mw": 28.4,
-   "stress_hours": 0
+   "Hmax_mw": 27.92,
+   "stress_hours": 176
   },
   {
    "id": "S06-4",
@@ -369,8 +438,8 @@
    "y": 0.0,
    "T_firm": 33.0,
    "T_flex": 9.0,
-   "Hmax_mw": 28.4,
-   "stress_hours": 0
+   "Hmax_mw": 27.92,
+   "stress_hours": 176
   },
   {
    "id": "S06-5",
@@ -381,8 +450,8 @@
    "y": 0.0,
    "T_firm": 29.0,
    "T_flex": 5.0,
-   "Hmax_mw": 28.4,
-   "stress_hours": 0
+   "Hmax_mw": 27.92,
+   "stress_hours": 176
   },
   {
    "id": "S07-1",
@@ -393,8 +462,8 @@
    "y": 0.0,
    "T_firm": 36.0,
    "T_flex": 6.0,
-   "Hmax_mw": 25.66,
-   "stress_hours": 0
+   "Hmax_mw": 25.11,
+   "stress_hours": 176
   },
   {
    "id": "S07-2",
@@ -405,8 +474,8 @@
    "y": 0.0,
    "T_firm": 34.0,
    "T_flex": 9.0,
-   "Hmax_mw": 25.66,
-   "stress_hours": 0
+   "Hmax_mw": 25.11,
+   "stress_hours": 176
   },
   {
    "id": "S07-3",
@@ -417,8 +486,8 @@
    "y": 0.0,
    "T_firm": 23.0,
    "T_flex": 6.0,
-   "Hmax_mw": 25.66,
-   "stress_hours": 0
+   "Hmax_mw": 25.11,
+   "stress_hours": 176
   },
   {
    "id": "S07-4",
@@ -429,8 +498,8 @@
    "y": 0.0,
    "T_firm": 21.0,
    "T_flex": 9.0,
-   "Hmax_mw": 25.66,
-   "stress_hours": 0
+   "Hmax_mw": 25.11,
+   "stress_hours": 176
   },
   {
    "id": "S07-5",
@@ -441,8 +510,8 @@
    "y": 0.0,
    "T_firm": 31.0,
    "T_flex": 8.0,
-   "Hmax_mw": 25.66,
-   "stress_hours": 2
+   "Hmax_mw": 25.11,
+   "stress_hours": 176
   },
   {
    "id": "S08-1",
@@ -453,8 +522,8 @@
    "y": 0.0,
    "T_firm": 18.0,
    "T_flex": 7.0,
-   "Hmax_mw": 8.49,
-   "stress_hours": 8755
+   "Hmax_mw": 8.28,
+   "stress_hours": 176
   },
   {
    "id": "S08-2",
@@ -465,8 +534,8 @@
    "y": 0.0,
    "T_firm": 19.0,
    "T_flex": 9.0,
-   "Hmax_mw": 8.49,
-   "stress_hours": 8755
+   "Hmax_mw": 8.28,
+   "stress_hours": 176
   },
   {
    "id": "S08-3",
@@ -477,8 +546,8 @@
    "y": 0.0,
    "T_firm": 31.0,
    "T_flex": 6.0,
-   "Hmax_mw": 8.49,
-   "stress_hours": 5488
+   "Hmax_mw": 8.28,
+   "stress_hours": 176
   },
   {
    "id": "S08-4",
@@ -489,8 +558,8 @@
    "y": 0.0,
    "T_firm": 26.0,
    "T_flex": 5.0,
-   "Hmax_mw": 8.49,
-   "stress_hours": 3663
+   "Hmax_mw": 8.28,
+   "stress_hours": 176
   },
   {
    "id": "S08-5",
@@ -501,8 +570,8 @@
    "y": 0.0,
    "T_firm": 32.0,
    "T_flex": 7.0,
-   "Hmax_mw": 8.49,
-   "stress_hours": 8755
+   "Hmax_mw": 8.28,
+   "stress_hours": 176
   }
  ],
  "grid": {
@@ -5584,7 +5653,7 @@
    27323.5,
    26905.2,
    26536.7,
-   10496.2,
+   26538.9,
    26541.1,
    27285.3,
    28296.0,
@@ -23108,7 +23177,7 @@
    0.9108,
    0.8968,
    0.8846,
-   0.3499,
+   0.8846,
    0.8847,
    0.9095,
    0.9432,
@@ -26794,7 +26863,8 @@
    0.6432
   ],
   "stress_day": {
-   "date": "representative stress day",
+   "date": "2025-08-21",
+   "region": "CAL",
    "hours": [
     0,
     1,
@@ -26821,33 +26891,85 @@
     22,
     23
    ],
-   "demand_index": [
-    0.869,
-    0.831,
-    0.804,
-    0.78,
-    0.758,
-    0.775,
-    0.817,
-    0.903,
-    1.027,
-    1.064,
-    1.069,
-    1.046,
-    1.054,
-    1.082,
-    1.144,
-    1.21,
-    1.251,
-    1.293,
-    1.298,
-    1.253,
-    1.217,
-    1.159,
-    1.078,
-    0.987
+   "demand_mw": [
+    33859.0,
+    31234.0,
+    29371.0,
+    28075.0,
+    27149.0,
+    26364.0,
+    25610.0,
+    26190.0,
+    27610.0,
+    30518.0,
+    34698.0,
+    35953.0,
+    36096.0,
+    35336.0,
+    35597.0,
+    36561.0,
+    38641.0,
+    40870.0,
+    42269.0,
+    43665.0,
+    43860.0,
+    42342.0,
+    41099.0,
+    39138.0
    ],
-   "solar_index": [
+   "solar_mw": [
+    -6.0,
+    -25.0,
+    -25.0,
+    -24.0,
+    -24.0,
+    -24.0,
+    -23.0,
+    -23.0,
+    637.0,
+    6578.0,
+    13564.0,
+    16059.0,
+    16926.0,
+    16969.0,
+    16846.0,
+    16329.0,
+    16493.0,
+    15155.0,
+    13699.0,
+    10609.0,
+    4389.0,
+    312.0,
+    -35.0,
+    -30.0
+   ],
+   "headroom_mw": [
+    128.0,
+    134.3,
+    138.9,
+    142.7,
+    146.4,
+    143.6,
+    136.6,
+    122.3,
+    101.8,
+    95.7,
+    95.0,
+    98.7,
+    97.4,
+    92.7,
+    82.5,
+    71.5,
+    64.7,
+    57.8,
+    56.8,
+    64.3,
+    70.4,
+    80.0,
+    93.4,
+    108.5
+   ],
+   "curtail_mw": [
     0.0,
     0.0,
     0.0,
@@ -26864,17 +26986,43 @@
     0.0,
     0.0,
     0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
+    0.22,
+    0.92,
+    1.02,
+    0.25,
     0.0,
     0.0,
     0.0,
     0.0
    ],
-   "curtail_mw": [],
-   "note": "synthetic aggregation of real 2025 shape"
+   "curtail_mw_naive": [
+    3.98,
+    3.07,
+    2.42,
+    1.87,
+    1.36,
+    1.74,
+    2.74,
+    4.79,
+    7.73,
+    8.62,
+    8.72,
+    8.18,
+    8.37,
+    9.14,
+    11.48,
+    17.58,
+    21.73,
+    27.43,
+    28.41,
+    22.01,
+    18.21,
+    12.84,
+    9.0,
+    6.77
+   ],
+   "peak_demand_mw": 43860.0,
+   "note": "real 2025 EIA-930 demand and solar for CAL (local time), peak 43860 MW; headroom and required curtailment are model output on synthetic site geometry"
   }
  },
  "baselines": {
@@ -26976,11 +27124,11 @@
   },
   "max_mw_no_flex": {
    "label": "max_mw_no_flex",
-   "delivered_mwmonths": 3384.2,
+   "delivered_mwmonths": 3384.02,
    "mw_at_month12": 172.6,
-   "net_value_musd": -205.36,
+   "net_value_musd": -449.453,
    "violations_mwh": 0.0,
-   "sla_breach_mwh": 793918.7,
+   "sla_breach_mwh": 1150268.3,
    "compliant_mwmonths": 1447.85,
    "compliant_mw12": 48.0,
    "monthly_mw": [
@@ -27025,1985 +27173,1169 @@
  },
  "iterations": [
   {
+   "phase": "parametric",
    "iter": 0,
-   "score": -1244.8718,
-   "delivered_mwmonths": 1830.42,
-   "mw_at_month12": 59.33,
-   "violations_mwh": 143.149,
-   "net_value_musd": 186.621
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 1,
-   "score": -1122.2325,
-   "delivered_mwmonths": 1242.61,
-   "mw_at_month12": 22.45,
-   "violations_mwh": 125.447,
-   "net_value_musd": 132.235
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 2,
-   "score": -568.6224,
-   "delivered_mwmonths": 1727.25,
-   "mw_at_month12": 56.36,
-   "violations_mwh": 74.651,
-   "net_value_musd": 177.888
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 3,
-   "score": -568.6224,
-   "delivered_mwmonths": 1727.25,
-   "mw_at_month12": 56.36,
-   "violations_mwh": 74.651,
-   "net_value_musd": 177.888
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 4,
-   "score": -568.6224,
-   "delivered_mwmonths": 1727.25,
-   "mw_at_month12": 56.36,
-   "violations_mwh": 74.651,
-   "net_value_musd": 177.888
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 5,
-   "score": 78.5257,
-   "delivered_mwmonths": 1375.74,
-   "mw_at_month12": 43.7,
-   "violations_mwh": 7.225,
-   "net_value_musd": 150.778
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 6,
-   "score": 78.5257,
-   "delivered_mwmonths": 1375.74,
-   "mw_at_month12": 43.7,
-   "violations_mwh": 7.225,
-   "net_value_musd": 150.778
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 7,
-   "score": 78.5257,
-   "delivered_mwmonths": 1375.74,
-   "mw_at_month12": 43.7,
-   "violations_mwh": 7.225,
-   "net_value_musd": 150.778
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 8,
-   "score": 78.5257,
-   "delivered_mwmonths": 1375.74,
-   "mw_at_month12": 43.7,
-   "violations_mwh": 7.225,
-   "net_value_musd": 150.778
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 9,
-   "score": 78.5257,
-   "delivered_mwmonths": 1375.74,
-   "mw_at_month12": 43.7,
-   "violations_mwh": 7.225,
-   "net_value_musd": 150.778
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 10,
-   "score": 78.5257,
-   "delivered_mwmonths": 1375.74,
-   "mw_at_month12": 43.7,
-   "violations_mwh": 7.225,
-   "net_value_musd": 150.778
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 11,
-   "score": 78.5257,
-   "delivered_mwmonths": 1375.74,
-   "mw_at_month12": 43.7,
-   "violations_mwh": 7.225,
-   "net_value_musd": 150.778
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 12,
-   "score": 78.5257,
-   "delivered_mwmonths": 1375.74,
-   "mw_at_month12": 43.7,
-   "violations_mwh": 7.225,
-   "net_value_musd": 150.778
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
+   "violations_mwh": 0.0,
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 13,
-   "score": 122.2237,
-   "delivered_mwmonths": 1102.17,
-   "mw_at_month12": 34.12,
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
    "violations_mwh": 0.0,
-   "net_value_musd": 122.224
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 14,
-   "score": 122.2237,
-   "delivered_mwmonths": 1102.17,
-   "mw_at_month12": 34.12,
+   "score": 172.246,
+   "delivered_mwmonths": 1756.5,
+   "mw_at_month12": 51.05,
    "violations_mwh": 0.0,
-   "net_value_musd": 122.224
+   "net_value_musd": 172.246
   },
   {
+   "phase": "parametric",
    "iter": 15,
-   "score": 141.6012,
-   "delivered_mwmonths": 1306.8,
-   "mw_at_month12": 41.59,
+   "score": 172.689,
+   "delivered_mwmonths": 1775.34,
+   "mw_at_month12": 48.31,
    "violations_mwh": 0.0,
-   "net_value_musd": 141.601
+   "net_value_musd": 172.689
   },
   {
+   "phase": "parametric",
    "iter": 16,
-   "score": 141.6012,
-   "delivered_mwmonths": 1306.8,
-   "mw_at_month12": 41.59,
+   "score": 172.689,
+   "delivered_mwmonths": 1775.34,
+   "mw_at_month12": 48.31,
    "violations_mwh": 0.0,
-   "net_value_musd": 141.601
+   "net_value_musd": 172.689
   },
   {
+   "phase": "parametric",
    "iter": 17,
-   "score": 141.6012,
-   "delivered_mwmonths": 1306.8,
-   "mw_at_month12": 41.59,
+   "score": 172.689,
+   "delivered_mwmonths": 1775.34,
+   "mw_at_month12": 48.31,
    "violations_mwh": 0.0,
-   "net_value_musd": 141.601
+   "net_value_musd": 172.689
   },
   {
+   "phase": "parametric",
    "iter": 18,
-   "score": 141.6012,
-   "delivered_mwmonths": 1306.8,
-   "mw_at_month12": 41.59,
+   "score": 172.689,
+   "delivered_mwmonths": 1775.34,
+   "mw_at_month12": 48.31,
    "violations_mwh": 0.0,
-   "net_value_musd": 141.601
+   "net_value_musd": 172.689
   },
   {
+   "phase": "parametric",
    "iter": 19,
-   "score": 141.6012,
-   "delivered_mwmonths": 1306.8,
-   "mw_at_month12": 41.59,
+   "score": 172.689,
+   "delivered_mwmonths": 1775.34,
+   "mw_at_month12": 48.31,
    "violations_mwh": 0.0,
-   "net_value_musd": 141.601
+   "net_value_musd": 172.689
   },
   {
+   "phase": "parametric",
    "iter": 20,
-   "score": 141.6012,
-   "delivered_mwmonths": 1306.8,
-   "mw_at_month12": 41.59,
+   "score": 172.689,
+   "delivered_mwmonths": 1775.34,
+   "mw_at_month12": 48.31,
    "violations_mwh": 0.0,
-   "net_value_musd": 141.601
+   "net_value_musd": 172.689
   },
   {
+   "phase": "parametric",
    "iter": 21,
-   "score": 141.6012,
-   "delivered_mwmonths": 1306.8,
-   "mw_at_month12": 41.59,
+   "score": 172.689,
+   "delivered_mwmonths": 1775.34,
+   "mw_at_month12": 48.31,
    "violations_mwh": 0.0,
-   "net_value_musd": 141.601
+   "net_value_musd": 172.689
   },
   {
+   "phase": "parametric",
    "iter": 22,
-   "score": 141.6012,
-   "delivered_mwmonths": 1306.8,
-   "mw_at_month12": 41.59,
+   "score": 173.8831,
+   "delivered_mwmonths": 2018.44,
+   "mw_at_month12": 66.47,
    "violations_mwh": 0.0,
-   "net_value_musd": 141.601
+   "net_value_musd": 173.883
   },
   {
+   "phase": "parametric",
    "iter": 23,
-   "score": 141.6012,
-   "delivered_mwmonths": 1306.8,
-   "mw_at_month12": 41.59,
+   "score": 173.8831,
+   "delivered_mwmonths": 2018.44,
+   "mw_at_month12": 66.47,
    "violations_mwh": 0.0,
-   "net_value_musd": 141.601
+   "net_value_musd": 173.883
   },
   {
+   "phase": "parametric",
    "iter": 24,
-   "score": 158.7833,
-   "delivered_mwmonths": 1460.66,
-   "mw_at_month12": 41.49,
-   "violations_mwh": 0.061,
-   "net_value_musd": 159.391
+   "score": 173.8831,
+   "delivered_mwmonths": 2018.44,
+   "mw_at_month12": 66.47,
+   "violations_mwh": 0.0,
+   "net_value_musd": 173.883
   },
   {
+   "phase": "parametric",
    "iter": 25,
-   "score": 158.7833,
-   "delivered_mwmonths": 1460.66,
-   "mw_at_month12": 41.49,
-   "violations_mwh": 0.061,
-   "net_value_musd": 159.391
+   "score": 173.8831,
+   "delivered_mwmonths": 2018.44,
+   "mw_at_month12": 66.47,
+   "violations_mwh": 0.0,
+   "net_value_musd": 173.883
   },
   {
+   "phase": "parametric",
    "iter": 26,
-   "score": 158.7833,
-   "delivered_mwmonths": 1460.66,
-   "mw_at_month12": 41.49,
-   "violations_mwh": 0.061,
-   "net_value_musd": 159.391
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 27,
-   "score": 158.7833,
-   "delivered_mwmonths": 1460.66,
-   "mw_at_month12": 41.49,
-   "violations_mwh": 0.061,
-   "net_value_musd": 159.391
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 28,
-   "score": 160.9122,
-   "delivered_mwmonths": 1519.64,
-   "mw_at_month12": 48.0,
-   "violations_mwh": 0.627,
-   "net_value_musd": 167.178
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 29,
-   "score": 177.5043,
-   "delivered_mwmonths": 1642.88,
-   "mw_at_month12": 55.85,
-   "violations_mwh": 0.109,
-   "net_value_musd": 178.594
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 30,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 31,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 32,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 33,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 34,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 35,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 36,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 37,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 38,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 39,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 40,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 41,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 42,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 43,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 44,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 45,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 46,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 47,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 48,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 49,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 50,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 51,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 52,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 53,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 54,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 55,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 56,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 57,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 58,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "parametric",
    "iter": 59,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 176.0569,
+   "delivered_mwmonths": 1975.96,
+   "mw_at_month12": 63.18,
+   "violations_mwh": 0.0,
+   "net_value_musd": 176.057
   },
   {
+   "phase": "llm",
    "iter": 60,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 190.223,
+   "delivered_mwmonths": 2050.26,
+   "mw_at_month12": 69.85,
+   "violations_mwh": 0.0,
+   "net_value_musd": 202.399,
+   "gen": 0,
+   "gen_score": 190.223,
+   "gen_kept": false,
+   "gen_change": "reference: PARAMS = best.params from results/loop.json (snapshot 04:24; 9 decoded values inverted back to [0,1] in PARAM_NAMES order). Scored 202.3988 then. loo"
   },
   {
+   "phase": "llm",
    "iter": 61,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 269.6358,
+   "delivered_mwmonths": 2494.56,
+   "mw_at_month12": 84.4,
+   "violations_mwh": 0.0,
+   "net_value_musd": 269.636,
+   "gen": 1,
+   "gen_score": 269.6358,
+   "gen_kept": false,
+   "gen_change": "own logic: per-substation greedy over exact breakpoints of the residual headroom curve, per-site best (mw, SLA) by 0.10*mult*mw*(36-T)*avail. Battery candidates"
   },
   {
+   "phase": "llm",
    "iter": 62,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 269.6358,
+   "delivered_mwmonths": 2494.56,
+   "mw_at_month12": 84.4,
+   "violations_mwh": 0.0,
+   "net_value_musd": 269.636,
+   "gen": 2,
+   "gen_score": 269.6358,
+   "gen_kept": false,
+   "gen_change": "exact per-substation coordinate ascent on (mw, SLA) + restarts; same value as gen_1 (it is a strict local optimum) -- the gap is a 2-site coordination move, not"
   },
   {
+   "phase": "llm",
    "iter": 63,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 277.2083,
+   "delivered_mwmonths": 2468.39,
+   "mw_at_month12": 84.65,
+   "violations_mwh": 0.0,
+   "net_value_musd": 277.208,
+   "gen": 3,
+   "gen_score": 277.2083,
+   "gen_kept": false,
+   "gen_change": "tier construction: substation capacity split into 3 price layers (99.99% -> min H keeps x1.25, 99.9% -> 8th-lowest hour x1.00, 99% -> 87th x0.80), each layer to"
   },
   {
+   "phase": "llm",
    "iter": 64,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 277.2083,
+   "delivered_mwmonths": 1051.98,
+   "mw_at_month12": 36.28,
+   "violations_mwh": 0.0,
+   "net_value_musd": 115.363,
+   "gen": 4,
+   "gen_score": 115.3629,
+   "gen_kept": false,
+   "gen_change": "FAILED: DP over cumulative MW prefixes, but candidates were only sorted(H)[k] breakpoints; on S02 (min headroom 10.5 MW > first site max_mw 5.5) no feasible pre"
   },
   {
+   "phase": "llm",
    "iter": 65,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
+   "score": 277.2083,
+   "delivered_mwmonths": 2466.96,
+   "mw_at_month12": 84.58,
+   "violations_mwh": 0.0,
+   "net_value_musd": 277.105,
+   "gen": 5,
+   "gen_score": 277.1048,
+   "gen_kept": false,
+   "gen_change": "DP fixed: candidates = headroom breakpoints + nameplate prefix sums + a+sorted(H)[k], plus mw>=0.5 constraint; exact optimum per substation (DP value 280.28) bu"
   },
   {
+   "phase": "llm",
    "iter": 66,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
-  },
-  {
-   "iter": 67,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
-  },
-  {
-   "iter": 68,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
-  },
-  {
-   "iter": 69,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
-  },
-  {
-   "iter": 70,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
-  },
-  {
-   "iter": 71,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
-  },
-  {
-   "iter": 72,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
-  },
-  {
-   "iter": 73,
-   "score": 199.5286,
-   "delivered_mwmonths": 2038.67,
-   "mw_at_month12": 69.13,
-   "violations_mwh": 0.109,
-   "net_value_musd": 200.618
-  },
-  {
-   "iter": 74,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 75,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 76,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 77,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 78,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 79,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 80,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 81,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 82,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 83,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 84,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 85,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 86,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 87,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 88,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 89,
-   "score": 200.9143,
-   "delivered_mwmonths": 2036.35,
-   "mw_at_month12": 69.39,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.004
-  },
-  {
-   "iter": 90,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 91,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 92,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 93,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 94,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 95,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 96,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 97,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 98,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 99,
-   "score": 201.1119,
-   "delivered_mwmonths": 2063.04,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 202.202
-  },
-  {
-   "iter": 100,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 101,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 102,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 103,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 104,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 105,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 106,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 107,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 108,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 109,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 110,
-   "score": 201.9852,
-   "delivered_mwmonths": 2053.06,
-   "mw_at_month12": 69.96,
-   "violations_mwh": 0.109,
-   "net_value_musd": 203.075
-  },
-  {
-   "iter": 111,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 112,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 113,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 114,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 115,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 116,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 117,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 118,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 119,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 120,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 121,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 122,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 123,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 124,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 125,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 126,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 127,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 128,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 129,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 130,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 131,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 132,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 133,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 134,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 135,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 136,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 137,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 138,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 139,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 140,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 141,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 142,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 143,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 144,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 145,
-   "score": 202.2275,
-   "delivered_mwmonths": 2050.42,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.227
-  },
-  {
-   "iter": 146,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 147,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 148,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 149,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 150,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 151,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 152,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 153,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 154,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 155,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 156,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 157,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 158,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 159,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 160,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 161,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 162,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 163,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 164,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 165,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 166,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 167,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 168,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 169,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 170,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 171,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 172,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 173,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 174,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 175,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 176,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 177,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 178,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
-  },
-  {
-   "iter": 179,
-   "score": 202.3988,
-   "delivered_mwmonths": 2050.26,
-   "mw_at_month12": 69.85,
-   "violations_mwh": 0.0,
-   "net_value_musd": 202.399
+   "score": 279.9082,
+   "delivered_mwmonths": 2490.58,
+   "mw_at_month12": 85.39,
+   "violations_mwh": 0.0,
+   "net_value_musd": 279.908,
+   "gen": 6,
+   "gen_score": 279.9082,
+   "gen_kept": true,
+   "gen_change": "FINAL: same exact DP + repair-friendly MW offset (+0.0049) so repair_portfolio's floor lands on the planned value. 32 flex sites, 0 violations, compliant_mwmont"
   }
  ],
  "history": [
   {
-   "iter": 120,
-   "candidate_score": 89.5989,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1701.95,
-   "candidate_violations": 9.462
-  },
-  {
-   "iter": 121,
-   "candidate_score": 201.9462,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2053.06,
-   "candidate_violations": 0.109
-  },
-  {
-   "iter": 122,
-   "candidate_score": 111.9074,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2054.12,
-   "candidate_violations": 9.103
-  },
-  {
-   "iter": 123,
-   "candidate_score": 136.9427,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1613.37,
-   "candidate_violations": 3.345
-  },
-  {
-   "iter": 124,
-   "candidate_score": 114.001,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1896.91,
-   "candidate_violations": 7.373
-  },
-  {
-   "iter": 125,
-   "candidate_score": 157.0758,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2053.04,
-   "candidate_violations": 4.298
-  },
-  {
-   "iter": 126,
-   "candidate_score": 197.2916,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1959.81,
-   "candidate_violations": 0.109
-  },
-  {
-   "iter": 127,
-   "candidate_score": 164.9696,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2035.0,
-   "candidate_violations": 3.602
-  },
-  {
-   "iter": 128,
-   "candidate_score": 180.4555,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1789.83,
+   "iter": 0,
+   "candidate_score": 165.9589,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1717.63,
    "candidate_violations": 0.0
   },
   {
-   "iter": 129,
-   "candidate_score": 111.5288,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2048.1,
-   "candidate_violations": 9.103
-  },
-  {
-   "iter": 130,
-   "candidate_score": 202.0117,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2045.08,
-   "candidate_violations": 0.021
-  },
-  {
-   "iter": 131,
-   "candidate_score": 107.3857,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2054.06,
-   "candidate_violations": 9.572
-  },
-  {
-   "iter": 132,
-   "candidate_score": 192.9038,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1836.61,
+   "iter": 1,
+   "candidate_score": 104.6559,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 984.65,
    "candidate_violations": 0.0
   },
   {
-   "iter": 133,
-   "candidate_score": 151.4692,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2054.35,
-   "candidate_violations": 4.883
-  },
-  {
-   "iter": 134,
-   "candidate_score": 138.9517,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2047.11,
-   "candidate_violations": 6.273
-  },
-  {
-   "iter": 135,
-   "candidate_score": 176.0933,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1665.8,
+   "iter": 2,
+   "candidate_score": 168.1781,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1772.27,
    "candidate_violations": 0.0
   },
   {
-   "iter": 136,
-   "candidate_score": 179.4459,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2026.83,
-   "candidate_violations": 1.937
-  },
-  {
-   "iter": 137,
-   "candidate_score": 141.1705,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1696.63,
-   "candidate_violations": 4.138
-  },
-  {
-   "iter": 138,
-   "candidate_score": 135.7602,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2047.61,
-   "candidate_violations": 6.603
-  },
-  {
-   "iter": 139,
-   "candidate_score": 165.7051,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2038.6,
-   "candidate_violations": 3.345
-  },
-  {
-   "iter": 140,
-   "candidate_score": 148.7975,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1822.81,
-   "candidate_violations": 4.298
-  },
-  {
-   "iter": 141,
-   "candidate_score": 154.852,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2044.2,
-   "candidate_violations": 4.618
-  },
-  {
-   "iter": 142,
-   "candidate_score": 100.5218,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1905.51,
-   "candidate_violations": 8.803
-  },
-  {
-   "iter": 143,
-   "candidate_score": 135.769,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2047.6,
-   "candidate_violations": 6.603
-  },
-  {
-   "iter": 144,
-   "candidate_score": 143.1929,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 2046.3,
-   "candidate_violations": 5.833
-  },
-  {
-   "iter": 145,
-   "candidate_score": 130.6126,
-   "current_score": 202.2275,
-   "best_score": 202.2275,
-   "candidate_delivered": 1911.04,
-   "candidate_violations": 6.383
-  },
-  {
-   "iter": 146,
-   "candidate_score": 202.3988,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2050.26,
+   "iter": 3,
+   "candidate_score": 119.3828,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1366.0,
    "candidate_violations": 0.0
   },
   {
-   "iter": 147,
-   "candidate_score": 201.9852,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2053.06,
-   "candidate_violations": 0.109
-  },
-  {
-   "iter": 148,
-   "candidate_score": 107.45,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2055.35,
-   "candidate_violations": 9.572
-  },
-  {
-   "iter": 149,
-   "candidate_score": 171.5217,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2028.1,
-   "candidate_violations": 2.807
-  },
-  {
-   "iter": 150,
-   "candidate_score": 113.0447,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2053.63,
-   "candidate_violations": 8.983
-  },
-  {
-   "iter": 151,
-   "candidate_score": 107.45,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2055.35,
-   "candidate_violations": 9.572
-  },
-  {
-   "iter": 152,
-   "candidate_score": 201.4318,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2061.46,
-   "candidate_violations": 0.041
-  },
-  {
-   "iter": 153,
-   "candidate_score": 106.3358,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 1535.52,
-   "candidate_violations": 5.943
-  },
-  {
-   "iter": 154,
-   "candidate_score": 187.7666,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 1913.93,
+   "iter": 4,
+   "candidate_score": 92.155,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1781.0,
    "candidate_violations": 0.0
   },
   {
-   "iter": 155,
-   "candidate_score": 110.8302,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2054.28,
-   "candidate_violations": 9.213
-  },
-  {
-   "iter": 156,
-   "candidate_score": 128.3613,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2048.86,
-   "candidate_violations": 7.373
-  },
-  {
-   "iter": 157,
-   "candidate_score": 152.3378,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2044.68,
-   "candidate_violations": 4.883
-  },
-  {
-   "iter": 158,
-   "candidate_score": 151.8482,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 1916.9,
-   "candidate_violations": 4.058
-  },
-  {
-   "iter": 159,
-   "candidate_score": 201.9852,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2053.06,
-   "candidate_violations": 0.109
-  },
-  {
-   "iter": 160,
-   "candidate_score": 152.777,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 1782.04,
-   "candidate_violations": 2.657
-  },
-  {
-   "iter": 161,
-   "candidate_score": 188.5431,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 1902.42,
+   "iter": 5,
+   "candidate_score": 115.8742,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1257.25,
    "candidate_violations": 0.0
   },
   {
-   "iter": 162,
-   "candidate_score": 135.769,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2047.6,
-   "candidate_violations": 6.603
-  },
-  {
-   "iter": 163,
-   "candidate_score": 202.1206,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2049.17,
+   "iter": 6,
+   "candidate_score": 103.9233,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 960.26,
    "candidate_violations": 0.0
   },
   {
-   "iter": 164,
-   "candidate_score": 202.3246,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2051.0,
-   "candidate_violations": 0.109
-  },
-  {
-   "iter": 165,
-   "candidate_score": 201.3853,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2043.63,
-   "candidate_violations": 0.109
-  },
-  {
-   "iter": 166,
-   "candidate_score": 133.2794,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2041.91,
-   "candidate_violations": 6.823
-  },
-  {
-   "iter": 167,
-   "candidate_score": 121.941,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2050.49,
-   "candidate_violations": 8.043
-  },
-  {
-   "iter": 168,
-   "candidate_score": 202.299,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2049.05,
+   "iter": 7,
+   "candidate_score": 144.3386,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 2481.53,
    "candidate_violations": 0.0
   },
   {
-   "iter": 169,
-   "candidate_score": 201.9852,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2053.06,
-   "candidate_violations": 0.109
-  },
-  {
-   "iter": 170,
-   "candidate_score": 132.9506,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 1933.48,
-   "candidate_violations": 6.053
-  },
-  {
-   "iter": 171,
-   "candidate_score": 201.9852,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2053.06,
-   "candidate_violations": 0.109
-  },
-  {
-   "iter": 172,
-   "candidate_score": 139.6942,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 1911.93,
-   "candidate_violations": 4.703
-  },
-  {
-   "iter": 173,
-   "candidate_score": 180.1961,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 1792.84,
+   "iter": 8,
+   "candidate_score": 167.4462,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1645.89,
    "candidate_violations": 0.0
   },
   {
-   "iter": 174,
-   "candidate_score": 146.467,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 1823.45,
-   "candidate_violations": 4.538
+   "iter": 9,
+   "candidate_score": 171.3263,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1680.62,
+   "candidate_violations": 0.0
   },
   {
-   "iter": 175,
-   "candidate_score": 201.3172,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2042.44,
-   "candidate_violations": 0.109
+   "iter": 10,
+   "candidate_score": 170.9305,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1874.73,
+   "candidate_violations": 0.0
   },
   {
-   "iter": 176,
-   "candidate_score": 201.5057,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2041.69,
-   "candidate_violations": 0.071
+   "iter": 11,
+   "candidate_score": 155.6636,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1547.6,
+   "candidate_violations": 0.0
   },
   {
-   "iter": 177,
-   "candidate_score": 164.0536,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2024.26,
-   "candidate_violations": 3.742
+   "iter": 12,
+   "candidate_score": 117.7095,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1544.95,
+   "candidate_violations": 0.0
   },
   {
-   "iter": 178,
-   "candidate_score": 126.2349,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2049.26,
-   "candidate_violations": 7.593
+   "iter": 13,
+   "candidate_score": 168.5386,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 1641.1,
+   "candidate_violations": 0.0
   },
   {
-   "iter": 179,
-   "candidate_score": 201.3853,
-   "current_score": 202.3988,
-   "best_score": 202.3988,
-   "candidate_delivered": 2043.63,
-   "candidate_violations": 0.109
+   "iter": 14,
+   "candidate_score": 160.0347,
+   "current_score": 172.246,
+   "best_score": 172.246,
+   "candidate_delivered": 2103.51,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 15,
+   "candidate_score": 172.689,
+   "current_score": 172.689,
+   "best_score": 172.689,
+   "candidate_delivered": 1775.34,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 16,
+   "candidate_score": 167.7484,
+   "current_score": 172.689,
+   "best_score": 172.689,
+   "candidate_delivered": 1663.89,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 17,
+   "candidate_score": 161.729,
+   "current_score": 172.689,
+   "best_score": 172.689,
+   "candidate_delivered": 2107.73,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 18,
+   "candidate_score": 160.9157,
+   "current_score": 172.689,
+   "best_score": 172.689,
+   "candidate_delivered": 1676.98,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 19,
+   "candidate_score": 160.5245,
+   "current_score": 172.689,
+   "best_score": 172.689,
+   "candidate_delivered": 1916.45,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 20,
+   "candidate_score": 126.5318,
+   "current_score": 172.689,
+   "best_score": 172.689,
+   "candidate_delivered": 1206.63,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 21,
+   "candidate_score": 167.7778,
+   "current_score": 172.689,
+   "best_score": 172.689,
+   "candidate_delivered": 1649.05,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 22,
+   "candidate_score": 173.8831,
+   "current_score": 173.8831,
+   "best_score": 173.8831,
+   "candidate_delivered": 2018.44,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 23,
+   "candidate_score": 107.3586,
+   "current_score": 173.8831,
+   "best_score": 173.8831,
+   "candidate_delivered": 1112.64,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 24,
+   "candidate_score": 162.4027,
+   "current_score": 173.8831,
+   "best_score": 173.8831,
+   "candidate_delivered": 1990.56,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 25,
+   "candidate_score": 55.185,
+   "current_score": 173.8831,
+   "best_score": 173.8831,
+   "candidate_delivered": 501.56,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 26,
+   "candidate_score": 176.0569,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1975.96,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 27,
+   "candidate_score": 109.4057,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1702.05,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 28,
+   "candidate_score": 167.4278,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1794.67,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 29,
+   "candidate_score": 168.1543,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1787.43,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 30,
+   "candidate_score": 164.0282,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1914.4,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 31,
+   "candidate_score": 167.179,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1720.68,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 32,
+   "candidate_score": 118.7374,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1615.22,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 33,
+   "candidate_score": 161.7428,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1851.45,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 34,
+   "candidate_score": 169.0555,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1845.78,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 35,
+   "candidate_score": 162.3647,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 2056.29,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 36,
+   "candidate_score": 160.4625,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1756.17,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 37,
+   "candidate_score": 163.274,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1864.87,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 38,
+   "candidate_score": 125.642,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1434.41,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 39,
+   "candidate_score": 144.286,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1736.71,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 40,
+   "candidate_score": 153.2856,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1777.77,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 41,
+   "candidate_score": 171.7674,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1832.29,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 42,
+   "candidate_score": 146.1122,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1677.26,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 43,
+   "candidate_score": 143.5316,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1933.98,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 44,
+   "candidate_score": 166.3538,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 2224.17,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 45,
+   "candidate_score": 147.0507,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1563.87,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 46,
+   "candidate_score": 174.446,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1916.66,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 47,
+   "candidate_score": 136.1473,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1583.71,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 48,
+   "candidate_score": 114.298,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1850.08,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 49,
+   "candidate_score": 168.0241,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 2112.62,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 50,
+   "candidate_score": 175.1183,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1774.93,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 51,
+   "candidate_score": 165.3495,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1635.2,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 52,
+   "candidate_score": 148.3637,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1880.4,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 53,
+   "candidate_score": 154.9814,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 2000.05,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 54,
+   "candidate_score": 152.1502,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1827.15,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 55,
+   "candidate_score": 153.476,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1773.72,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 56,
+   "candidate_score": 129.3015,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1448.53,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 57,
+   "candidate_score": 168.0176,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1952.23,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 58,
+   "candidate_score": 145.4761,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1947.61,
+   "candidate_violations": 0.0
+  },
+  {
+   "iter": 59,
+   "candidate_score": 158.7603,
+   "current_score": 176.0569,
+   "best_score": 176.0569,
+   "candidate_delivered": 1884.16,
+   "candidate_violations": 0.0
   }
  ],
  "best": {
   "label": "GRIDRUSH agent",
   "params": {
-   "target_frac": 0.9872,
-   "sla_bias": 1.0,
-   "speed_w": -1.0,
-   "firm_w": -0.4856,
-   "battery_w": -0.9699,
-   "risk_w": 0.0,
-   "size_w": -0.26,
-   "wait_w": -0.3024,
-   "sub_order": 0.1037
+   "policy": "flex-only exact DP per substation (LLM-generated code)",
+   "source": "rsi_agent/gen_6.py"
   },
-  "delivered_mwmonths": 2050.26,
-  "compliant_mwmonths": 2050.26,
-  "mw_at_month12": 69.85,
-  "net_value_musd": 202.399,
+  "delivered_mwmonths": 2490.58,
+  "compliant_mwmonths": 2490.58,
+  "mw_at_month12": 85.39,
+  "net_value_musd": 279.908,
   "violations_mwh": 0.0,
   "sla_breach_mwh": 0.0,
-  "capex_musd": 11.305,
+  "capex_musd": 0.0,
   "monthly_mw": [
    0.0,
    0.0,
    0.0,
    0.0,
    0.0,
-   9.45,
-   16.78,
-   27.8,
-   50.57,
-   58.95,
-   69.23,
-   69.85,
-   69.85,
-   69.85,
-   69.85,
-   69.85,
-   69.85,
-   69.85,
-   69.85,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31,
-   74.31
+   26.32,
+   42.63,
+   62.82,
+   69.58,
+   74.58,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39,
+   85.39
   ],
   "monthly_mw_by_mode": {
    "firm": [
@@ -29026,23 +28358,23 @@
     0.0,
     0.0,
     0.0,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46,
-    4.46
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
    ],
    "flex": [
     0.0,
@@ -29050,37 +28382,37 @@
     0.0,
     0.0,
     0.0,
-    9.45,
-    16.72,
-    22.8,
-    27.18,
-    27.18,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39,
-    37.39
+    26.32,
+    42.61,
+    62.79,
+    69.52,
+    74.48,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19,
+    85.19
    ],
    "battery": [
     0.0,
@@ -29090,35 +28422,35 @@
     0.0,
     0.0,
     0.0,
-    4.92,
-    23.3,
-    31.68,
-    31.68,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3,
-    32.3
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
    ],
    "skip": [
     0.0,
@@ -29163,235 +28495,378 @@
    {
     "id": "S05-1",
     "substation": "S05",
-    "mode": "battery",
-    "mw": 8.38,
-    "sla": 0.9999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S03-3",
-    "substation": "S03",
-    "mode": "battery",
-    "mw": 6.61,
-    "sla": 0.9999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S06-2",
-    "substation": "S06",
-    "mode": "battery",
-    "mw": 6.36,
-    "sla": 0.9999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S02-1",
-    "substation": "S02",
-    "mode": "battery",
-    "mw": 5.41,
-    "sla": 0.9999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S05-2",
-    "substation": "S05",
-    "mode": "battery",
-    "mw": 4.92,
-    "sla": 0.9999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S07-4",
-    "substation": "S07",
-    "mode": "battery",
-    "mw": 0.62,
-    "sla": 0.9999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S04-5",
-    "substation": "S04",
-    "mode": "firm",
-    "mw": 4.46,
-    "sla": 0.9999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S05-3",
-    "substation": "S05",
     "mode": "flex",
-    "mw": 7.06,
-    "sla": 0.99,
+    "mw": 8.5,
+    "sla": 0.9999,
     "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S04-2",
-    "substation": "S04",
-    "mode": "flex",
-    "mw": 5.37,
-    "sla": 0.99,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S02-2",
-    "substation": "S02",
-    "mode": "flex",
-    "mw": 3.41,
-    "sla": 0.99,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S06-5",
-    "substation": "S06",
-    "mode": "flex",
-    "mw": 3.39,
-    "sla": 0.999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S01-4",
-    "substation": "S01",
-    "mode": "flex",
-    "mw": 3.29,
-    "sla": 0.999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
-   },
-   {
-    "id": "S02-5",
-    "substation": "S02",
-    "mode": "flex",
-    "mw": 3.22,
-    "sla": 0.999,
-    "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
+    "energize_month": 7,
+    "curtail_hours": 0.0,
+    "avail": 1.0
    },
    {
     "id": "S03-4",
     "substation": "S03",
     "mode": "flex",
-    "mw": 2.77,
-    "sla": 0.99,
+    "mw": 7.0,
+    "sla": 0.9999,
     "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
+    "energize_month": 5,
+    "curtail_hours": 0.0,
+    "avail": 1.0
    },
    {
-    "id": "S06-3",
+    "id": "S06-2",
     "substation": "S06",
     "mode": "flex",
-    "mw": 2.34,
+    "mw": 5.75,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 7,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S02-1",
+    "substation": "S02",
+    "mode": "flex",
+    "mw": 5.5,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 5,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S05-2",
+    "substation": "S05",
+    "mode": "flex",
+    "mw": 5.0,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 5,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S02-5",
+    "substation": "S02",
+    "mode": "flex",
+    "mw": 4.94,
     "sla": 0.99,
     "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
+    "energize_month": 10,
+    "curtail_hours": 87.0,
+    "avail": 0.990068
+   },
+   {
+    "id": "S04-2",
+    "substation": "S04",
+    "mode": "flex",
+    "mw": 4.48,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 6,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S06-5",
+    "substation": "S06",
+    "mode": "flex",
+    "mw": 4.0,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 5,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S05-3",
+    "substation": "S05",
+    "mode": "flex",
+    "mw": 3.96,
+    "sla": 0.99,
+    "battery_mwh": 0.0,
+    "energize_month": 10,
+    "curtail_hours": 86.0,
+    "avail": 0.990183
+   },
+   {
+    "id": "S04-5",
+    "substation": "S04",
+    "mode": "flex",
+    "mw": 3.7,
+    "sla": 0.99,
+    "battery_mwh": 0.0,
+    "energize_month": 8,
+    "curtail_hours": 86.0,
+    "avail": 0.990183
+   },
+   {
+    "id": "S07-1",
+    "substation": "S07",
+    "mode": "flex",
+    "mw": 3.5,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 6,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S02-2",
+    "substation": "S02",
+    "mode": "flex",
+    "mw": 3.02,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 7,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S01-4",
+    "substation": "S01",
+    "mode": "flex",
+    "mw": 2.94,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 5,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S03-1",
+    "substation": "S03",
+    "mode": "flex",
+    "mw": 1.91,
+    "sla": 0.99,
+    "battery_mwh": 0.0,
+    "energize_month": 10,
+    "curtail_hours": 86.0,
+    "avail": 0.990183
+   },
+   {
+    "id": "S05-5",
+    "substation": "S05",
+    "mode": "flex",
+    "mw": 1.76,
+    "sla": 0.999,
+    "battery_mwh": 0.0,
+    "energize_month": 7,
+    "curtail_hours": 8.0,
+    "avail": 0.999087
+   },
+   {
+    "id": "S07-2",
+    "substation": "S07",
+    "mode": "flex",
+    "mw": 1.67,
+    "sla": 0.99,
+    "battery_mwh": 0.0,
+    "energize_month": 9,
+    "curtail_hours": 38.0,
+    "avail": 0.995662
+   },
+   {
+    "id": "S04-3",
+    "substation": "S04",
+    "mode": "flex",
+    "mw": 1.64,
+    "sla": 0.999,
+    "battery_mwh": 0.0,
+    "energize_month": 6,
+    "curtail_hours": 8.0,
+    "avail": 0.999087
+   },
+   {
+    "id": "S02-4",
+    "substation": "S02",
+    "mode": "flex",
+    "mw": 1.5,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 6,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S06-1",
+    "substation": "S06",
+    "mode": "flex",
+    "mw": 1.48,
+    "sla": 0.99,
+    "battery_mwh": 0.0,
+    "energize_month": 9,
+    "curtail_hours": 38.0,
+    "avail": 0.995662
+   },
+   {
+    "id": "S03-3",
+    "substation": "S03",
+    "mode": "flex",
+    "mw": 1.38,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 6,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S01-2",
+    "substation": "S01",
+    "mode": "flex",
+    "mw": 1.17,
+    "sla": 0.99,
+    "battery_mwh": 0.0,
+    "energize_month": 6,
+    "curtail_hours": 86.0,
+    "avail": 0.990183
    },
    {
     "id": "S07-5",
     "substation": "S07",
     "mode": "flex",
-    "mw": 2.05,
-    "sla": 0.99,
+    "mw": 1.17,
+    "sla": 0.999,
     "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
+    "energize_month": 8,
+    "curtail_hours": 8.0,
+    "avail": 0.999087
+   },
+   {
+    "id": "S05-4",
+    "substation": "S05",
+    "mode": "flex",
+    "mw": 1.16,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 7,
+    "curtail_hours": 0.0,
+    "avail": 1.0
    },
    {
     "id": "S07-3",
     "substation": "S07",
     "mode": "flex",
-    "mw": 1.96,
-    "sla": 0.99,
+    "mw": 1.13,
+    "sla": 0.9999,
     "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
+    "energize_month": 6,
+    "curtail_hours": 0.0,
+    "avail": 1.0
    },
    {
-    "id": "S08-1",
+    "id": "S06-3",
+    "substation": "S06",
+    "mode": "flex",
+    "mw": 1.04,
+    "sla": 0.999,
+    "battery_mwh": 0.0,
+    "energize_month": 8,
+    "curtail_hours": 8.0,
+    "avail": 0.999087
+   },
+   {
+    "id": "S08-3",
     "substation": "S08",
     "mode": "flex",
-    "mw": 1.89,
+    "mw": 1.01,
     "sla": 0.99,
     "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
+    "energize_month": 6,
+    "curtail_hours": 86.0,
+    "avail": 0.990183
    },
    {
-    "id": "S01-3",
-    "substation": "S01",
+    "id": "S03-5",
+    "substation": "S03",
     "mode": "flex",
-    "mw": 0.8,
+    "mw": 1.0,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 5,
+    "curtail_hours": 0.0,
+    "avail": 1.0
+   },
+   {
+    "id": "S07-4",
+    "substation": "S07",
+    "mode": "flex",
+    "mw": 0.98,
     "sla": 0.99,
     "battery_mwh": 0.0,
-    "energize_month": null,
-    "curtail_hours": null,
-    "avail": null
+    "energize_month": 9,
+    "curtail_hours": 86.0,
+    "avail": 0.990183
+   },
+   {
+    "id": "S08-4",
+    "substation": "S08",
+    "mode": "flex",
+    "mw": 0.88,
+    "sla": 0.999,
+    "battery_mwh": 0.0,
+    "energize_month": 5,
+    "curtail_hours": 8.0,
+    "avail": 0.999087
+   },
+   {
+    "id": "S06-4",
+    "substation": "S06",
+    "mode": "flex",
+    "mw": 0.87,
+    "sla": 0.99,
+    "battery_mwh": 0.0,
+    "energize_month": 9,
+    "curtail_hours": 86.0,
+    "avail": 0.990183
+   },
+   {
+    "id": "S03-2",
+    "substation": "S03",
+    "mode": "flex",
+    "mw": 0.85,
+    "sla": 0.999,
+    "battery_mwh": 0.0,
+    "energize_month": 8,
+    "curtail_hours": 8.0,
+    "avail": 0.999087
+   },
+   {
+    "id": "S02-3",
+    "substation": "S02",
+    "mode": "flex",
+    "mw": 0.5,
+    "sla": 0.9999,
+    "battery_mwh": 0.0,
+    "energize_month": 6,
+    "curtail_hours": 0.0,
+    "avail": 1.0
    }
   ]
  },
  "comparison": {
-  "ratio_net_value": 3.11,
-  "ratio_compliant_mwmonths": 3.15,
-  "agent_net_value_musd": 202.4,
-  "agent_compliant_mwmonths": 2050.3,
-  "agent_compliant_mw12": 69.8,
+  "ratio_net_value": 4.3,
+  "ratio_compliant_mwmonths": 3.82,
+  "agent_net_value_musd": 279.91,
+  "agent_compliant_mwmonths": 2490.6,
+  "agent_compliant_mw12": 85.4,
   "baseline_ref": "queue_order",
   "baseline_net_value_musd": 65.13,
   "baseline_compliant_mwmonths": 651.3,
   "baseline_mw12": 0.0,
   "baseline_label": "queue_order",
-  "naive_net_value_musd": -205.36,
+  "naive_net_value_musd": -449.45,
   "naive_mw12": 172.6,
   "violations": "0.0 MWh",
   "sla": "99.9%+ (per-site SLA met)",
-  "sites_energized": 19
+  "sites_energized": 32
  },
  "run_log": [
   "sim_meta=None",
-  "region=CAL sites=40 iters=180 wall=3.34s",
+  "region=CAL sites=40 iters=60 wall=2.52s",
   "baselines=['all_firm_greedy', 'queue_order', 'max_mw_no_flex']",
-  "best net=$202.4M vs queue_order $65.1M (3.11x), compliant=2050 MW·mo, mw12=69.8"
+  "best net=$279.9M vs queue_order $65.1M (4.3x), compliant=2491 MW·mo, mw12=85.4"
  ]
 }

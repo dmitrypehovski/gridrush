@@ -189,7 +189,7 @@
   ],
   "portfolio": {
     "source": "results/loop.json",
-    "sha256": "bbed112562dc",
+    "sha256": "e1f0b1f7e9af",
     "n_sites": 32,
     "total_mw": 85.39,
     "top5_ids": [
@@ -356,8 +356,10 @@
       }
     ],
     "worst_vm_bus": 190,
-    "run_ms": 16.0,
-    "status": "converged-with-violations"
+    "run_ms": 14.8,
+    "status": "converged-with-violations",
+    "min_vm": 0.921,
+    "violations": 71
   },
   "stress_case": {
     "label": "top-5 sites at scale=1.5 (stress)",
@@ -616,8 +618,10 @@
       }
     ],
     "worst_vm_bus": 190,
-    "run_ms": 16.6,
-    "status": "converged-with-violations"
+    "run_ms": 14.6,
+    "status": "converged-with-violations",
+    "min_vm": 0.88385,
+    "violations": 137
   },
   "class_case": {
     "label": "5 sites x 4-6 MW load class (20.8 MW)",
@@ -680,7 +684,9 @@
       }
     ],
     "worst_vm_bus": 190,
-    "status": "converged-with-violations"
+    "status": "converged-with-violations",
+    "min_vm": 0.92959,
+    "violations": 20
   },
   "feasible_case": {
     "label": "largest uniform scale of the top-5 portfolio with 0 violations",
@@ -710,8 +716,10 @@
     "voltage_violation_buses": [],
     "thermal_violations": [],
     "worst_vm_bus": 190,
-    "run_ms": 15.3,
-    "status": "converged-zero-violations"
+    "run_ms": 14.8,
+    "status": "converged-zero-violations",
+    "min_vm": 0.96345,
+    "violations": 0
   },
   "first_violation": {
     "scale": 0.2658,
@@ -733,17 +741,28 @@
       }
     ],
     "worst_vm_bus": 190,
-    "status": "converged-with-violations"
+    "status": "converged-with-violations",
+    "min_vm": 0.96306,
+    "violations": 1
   },
-  "collapse": {
-    "max_converged_scale": 2.9297,
-    "total_mw": 93.018,
+  "voltage_collapse": {
+    "definition": "first scale where min bus voltage < 0.90 p.u. (physical collapse threshold)",
+    "scale": 1.2969,
+    "total_mw": 41.176,
     "converged": true,
-    "min_vm_pu": 0.59641,
-    "max_loading_pct": 470.99,
-    "n_violations": 193,
+    "min_vm_pu": 0.9,
+    "max_loading_pct": 188.58,
+    "n_violations": 112,
     "worst_vm_bus": 190,
     "status": "converged-with-violations"
+  },
+  "solver_limit": {
+    "note": "mathematical solver limit: Newton PF still returns a converged solution below the physical voltage-collapse threshold - not a usable operating point",
+    "scale": 2.9297,
+    "total_mw": 93.018,
+    "min_vm_pu": 0.59641,
+    "max_loading_pct": 470.99,
+    "worst_vm_bus": 190
   },
   "single_site_case": {
     "label": "a single 4.5 MW site at the feeder's best bus",
@@ -760,8 +779,38 @@
     "voltage_violation_buses": [],
     "thermal_violations": [],
     "worst_vm_bus": 223,
-    "run_ms": 16.6,
-    "status": "converged-zero-violations"
+    "run_ms": 14.7,
+    "status": "converged-zero-violations",
+    "min_vm": 0.96743,
+    "violations": 0
+  },
+  "largest_site_case": {
+    "label": "largest single agent site at the feeder's best bus",
+    "site_id": "S05-1",
+    "bus": 73,
+    "headroom_at_bus_mw": 6.6,
+    "converged": true,
+    "total_mw": 8.5,
+    "max_line_loading_pct": 77.15,
+    "max_loading_pct": 108.61,
+    "min_vm_pu": 0.95541,
+    "n_violations": 1,
+    "n_voltage_violations": 0,
+    "n_thermal_violations": 1,
+    "voltage_violation_buses": [],
+    "thermal_violations": [
+      {
+        "kind": "trafo",
+        "index": 114,
+        "from_bus": 58,
+        "to_bus": 39,
+        "loading_pct": 108.61
+      }
+    ],
+    "worst_vm_bus": 223,
+    "status": "converged-with-violations",
+    "min_vm": 0.95541,
+    "violations": 1
   },
   "voltage_profile": {
     "order": "buses ordered by base-case voltage",
@@ -1381,10 +1430,10 @@
     }
   ],
   "timing": {
-    "base_pf_ms": 15.8,
-    "check_portfolio_ms": 15.3,
-    "headroom_s": 5.51,
-    "full_report_s": 7.26
+    "base_pf_ms": 14.8,
+    "check_portfolio_ms": 14.6,
+    "headroom_s": 4.81,
+    "full_report_s": 6.88
   },
   "caveats": [
     "mv_oberrhein is a real German 20 kV MV network shipped with pandapower (Oberrhein region). Assigning our synthetic sites to its buses is an illustration of the load class, not a claim about a specific project site.",

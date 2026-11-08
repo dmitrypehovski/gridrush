@@ -44,6 +44,19 @@ Ratios: **4.30×** net value, **3.82×** contract-compliant MW·months, **85.4 M
 - ERCOT: 410 GW large-load requests (87% data centers) vs 7.5 GW approved since 2022
 - 1 MW за 3–4 года = $5M (со сцены); подключение 7–10 лет (PG&E, со сцены)
 
+## Четыре региона, одна и та же политика (без тюнинга)
+
+| регион | ratio net | ratio MW·мес | net $M | compliant MW·мес | MW@12 | violations |
+|---|---|---|---|---|---|---|
+| CAL (CAISO) | **4.30×** | 3.82× | 279.91 | 2490.6 | 85.4 | 0 |
+| TEX (ERCOT) | 3.41× | 2.79× | 304.46 | 2491.7 | 84.1 | 0 |
+| MIDA (PJM) | 4.07× | 3.57× | 275.30 | 2415.7 | 82.4 | 0 |
+| MIDW (MISO) | 3.88× | 3.33× | 277.84 | 2390.4 | 81.3 | 0 |
+
+Источник: `results/loop_{CAL,TEX,MIDA,MIDW}.json` (та же `rsi_agent/gen_6.py`, `--iters 60 --seeds 1`).
+Формулировка для судей: «the same policy, four operators, 3.4–4.3× and zero violations — no per-region
+tuning».
+
 ## Что НЕ говорить
 
 - «real data» без «synthetic site geometry»; «zero violations» без «in the model»;

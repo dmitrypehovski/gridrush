@@ -83,6 +83,26 @@ proposer → portfolio → simulator (hour-by-hour) → score → keep if better
 - the policy also **repairs its own plan** (`repair_portfolio`) — plan, verify, shrink MW until every
   site's SLA holds; without this step the plan is optimistic and part of the MW is unsellable.
 
+### The same policy on four operators (no per-region tuning)
+
+| Region | 2025 peak | Net value ratio | Compliant MW·months ratio | Violations |
+|---|---|---|---|---|
+| CAL (CAISO) | 43,860 MW | 4.30× | 3.82× | 0 |
+| TEX (ERCOT) | 83,597 MW | 3.41× | 2.79× | 0 |
+| MIDA (PJM) | 160,560 MW | 4.07× | 3.57× | 0 |
+| MIDW (MISO) | 120,343 MW | 3.88× | 3.33× | 0 |
+
+### Physics check
+
+The main engine is an hourly capacity verifier on a headroom profile (the shape of data a utility
+publishes — PG&E ICA gives 576 hourly values per line section). On top of it, `sim/powerflow.py` runs
+a **real AC power flow** (pandapower `mv_oberrhein`: a real 20 kV German MV feeder, 179 buses,
+2×25 MVA). Base case converges at min V 0.9756 p.u.; the feeder has **8.2 MW of spare capacity** with
+0 violations, while our five largest sites need **31.8 MW** — they do not fit on one feeder (71
+violations, voltage collapse). That is exactly why this is a *siting* problem: 0.5–10 MW edge sites
+are the right unit, and the agent has to distribute them. `web/physics.html` shows every number from
+a measured run.
+
 ## What is real and what is synthetic
 
 Honesty is part of the demo. Every number on screen is labeled.

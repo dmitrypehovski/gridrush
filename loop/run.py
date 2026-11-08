@@ -58,7 +58,19 @@ def load_mock():
     return site_curves, evaluate, None
 
 
+def _site_coords() -> dict:
+    """x/y из data/sites.json (генерирует sim по seed=7) — для гео-карты в дашборде."""
+    try:
+        with open(os.path.join(ROOT, "data", "sites.json"), encoding="utf-8") as f:
+            d = json.load(f)
+        sites = d.get("sites", d) if isinstance(d, dict) else d
+        return {s["id"]: (float(s.get("x", 0.0)), float(s.get("y", 0.0))) for s in sites}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
 def site_records(curves: dict) -> list[dict]:
+    coords = _site_coords()
     out = []
     for i, sid in enumerate(curves["ids"]):
         out.append({
@@ -66,8 +78,8 @@ def site_records(curves: dict) -> list[dict]:
             "substation": f"S{int(curves['sub_idx'][i]) + 1:02d}",
             "cap_mw": round(float(curves["cap_mw"][int(curves["sub_idx"][i])]), 2),
             "max_mw": round(float(curves["max_mw"][i]), 2),
-            "x": round(float(curves.get("x", np.zeros(len(curves["ids"])))[i]), 5),
-            "y": round(float(curves.get("y", np.zeros(len(curves["ids"])))[i]), 5),
+            "x": round(coords.get(sid, (0.0, 0.0))[0], 5),
+            "y": round(coords.get(sid, (0.0, 0.0))[1], 5),
             "T_firm": round(float(curves["T_firm"][i]), 1),
             "T_flex": round(float(curves["T_flex"][i]), 1),
             "Hmax_mw": round(float(np.max(curves["H"][i])), 2),

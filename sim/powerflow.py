@@ -692,6 +692,15 @@ def build_report() -> dict:
             "Deterministic on the measured stack (Python 3.9.6, pandapower 3.2.2, numpy 2.0.2, scipy 1.13.1); no network access.",
         ],
     )
+    # Contract-friendly aliases: the frozen schema in CONTRACT.md / task spec
+    # names these keys ``min_vm`` and ``violations``; keep both spellings.
+    for section in ("case", "stress_case", "class_case", "feasible_case",
+                    "first_violation", "single_site_case", "largest_site_case"):
+        block = data[section]
+        if block.get("min_vm_pu") is not None:
+            block["min_vm"] = block["min_vm_pu"]
+        if block.get("n_violations") is not None:
+            block["violations"] = block["n_violations"]
     return data
 
 
@@ -929,9 +938,9 @@ const maxHr = Math.max(...D.headroom.map(r => r.headroom_mw));
 const kpis = [
   {k:'Base feeder', v:fmt(base.min_vm,4)+' p.u.', c:'good',
    d:'AC PF converged, 0 violations - min V, max loading ' + pct(base.max_loading) + ' (transformer)'},
-  {k:'Buses with headroom', v:D.headroom.filter(r=>true).length + ' / ' + D.headroom.length, c:'',
-   d:'per-bus headroom ' + fmt(Math.min(...D.headroom.map(r=>r.headroom_mw)),2) + '-' +
-     fmt(maxHr,2) + ' MW; transformer-limited'},
+  {k:'Per-bus AC headroom', v:fmt(Math.min(...D.headroom.map(r=>r.headroom_mw)),2) + '–' +
+     fmt(maxHr,2) + ' MW', c:'',
+   d:'15 load-centre buses; the shared 25 MVA transformers, not the 20 kV lines, bind first'},
   {k:'Feeder spare capacity', v:fmt(feas.total_mw,1)+' MW', c:'good',
    d:'largest tested load with AC PF converged and 0 violations'},
   {k:'Our 5 largest sites', v:fmt(D.case.total_mw,1)+' MW', c:'bad',
@@ -1035,9 +1044,9 @@ D.headroom.forEach(r => {
   const iMinCase = prof.case_vm.indexOf(Math.min(...prof.case_vm));
   svg('circle', {cx:x(iMinBase), cy:y(prof.base_vm[iMinBase]), r:4, fill:'#5f7fb0'}, root);
   svg('circle', {cx:x(iMinCase), cy:y(prof.case_vm[iMinCase]), r:5, fill:'#35d98f'}, root);
-  const t1 = svg('text', {x:x(iMinBase)+9, y:y(prof.base_vm[iMinBase])+18, fill:'#a9bcd8', 'font-size':14}, root);
+  const t1 = svg('text', {x:x(iMinBase)+10, y:y(prof.base_vm[iMinBase])+24, fill:'#a9bcd8', 'font-size':14}, root);
   t1.textContent = 'base min ' + fmt(prof.base_vm[iMinBase],4);
-  const t2 = svg('text', {x:x(iMinCase)+9, y:y(prof.case_vm[iMinCase])-10, fill:'#8ff0bf', 'font-size':14}, root);
+  const t2 = svg('text', {x:x(iMinCase)+150, y:y(prof.case_vm[iMinCase])-10, fill:'#8ff0bf', 'font-size':14}, root);
   t2.textContent = 'with ' + fmt(feas.total_mw,1) + ' MW: ' + fmt(prof.case_vm[iMinCase],4);
   // legend
   const lg = document.getElementById('voltLegend');
@@ -1072,8 +1081,8 @@ D.headroom.forEach(r => {
   });
   svg('line', {x1:x(100), y1:T, x2:x(100), y2:H-B, stroke:'#ff5f63', 'stroke-width':1.8,
                'stroke-dasharray':'7 6'}, root);
-  const lim = svg('text', {x:x(100)+8, y:T+16, fill:'#ff8b8e', 'font-size':14}, root);
-  lim.textContent = 'rating 100%';
+  const lim = svg('text', {x:W-R, y:14, fill:'#ff8b8e', 'font-size':14, 'text-anchor':'end'}, root);
+  lim.textContent = '100% rating';
   rows.forEach((r, i) => {
     const cy = T + i*rowH + rowH/2;
     const lab = svg('text', {x:L-12, y:cy+5, fill:'#cdd8ea', 'font-size':15, 'text-anchor':'end'}, root);
@@ -1103,7 +1112,7 @@ const siteIds = D.portfolio.top5_ids || [];
   });
   const td = el('td');
   const pill = el('span','pill ' + (over ? 'r' : 'g'));
-  pill.textContent = over ? (D.case.converged ? 'exceeds bus headroom' : 'contributes to collapse') : 'within headroom';
+  pill.textContent = over ? 'exceeds bus headroom' : 'fits this bus alone';
   td.appendChild(pill); tr.appendChild(td);
   caseBody.appendChild(tr);
 });
@@ -1136,7 +1145,8 @@ li('Note: Newton AC PF still returns a converged solution far into the low-volta
    'we therefore use min V &lt; 0.90 p.u. as the collapse threshold, not solver divergence.');
 li('Largest single agent site (' + fmt(largest.total_mw,1) + ' MW) at the best bus ' + largest.bus + ': ' +
    (largest.converged && largest.n_violations === 0 ? 'converged, 0 violations' :
-    (largest.n_violations + ' violations; max loading ' + pct2(largest.max_loading_pct))) +
+    (largest.n_violations + (largest.n_violations === 1 ? ' violation' : ' violations') +
+     '; max loading ' + pct2(largest.max_loading_pct))) +
    ' — the agent\'s biggest sites are larger than one 20 kV feeder bus can host.');
 li('Per-site class check: one <b>' + fmt(single.total_mw,1) + ' MW</b> site at bus ' + single.bus +
    ' → ' + (single.converged ? 'converged, 0 violations' : 'not converged') +

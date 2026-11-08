@@ -16,10 +16,10 @@
 | # | Однострочник (English — говорите как есть) | Цифра | Источник |
 |---|---|---|---|
 | 1 | "Connecting a data center to the grid today takes seven to ten years." | 7–10 лет | **спич**, PG&E (David, partnerships team), символы 27 187 (≈47.7% записи) |
-| 2 | "Three strategies, same forty sites: wait for firm power — zero megawatts at month twelve. Sign everything non-firm — one hundred seventy-three megawatts, and minus two hundred five million dollars. GRIDRUSH — seventy megawatts, plus two hundred two million." | 0 / 173 / 70 MW | **loop.json** (final). Это ваш главный слайд: три столбика, два числа на каждом |
+| 2 | "Three strategies, same forty sites: wait for firm power — zero megawatts at month twelve. Sign everything non-firm — one hundred seventy-three megawatts, and minus four hundred fifty million dollars. GRIDRUSH — eighty-five megawatts, plus two hundred eighty million." | 0 / 173 / 85 MW | **loop.json** (final). Это ваш главный слайд: три столбика, два числа на каждом |
 | 3 | "The engineer from PG&E said a load that curtails a few hot days a year could connect much faster. Someone in the room asked: so guaranteed capacity only 98% of the time? The utility answer: we're trying." | 98% | **спич**, символы 27 605–28 585 (≈48.5–50.2%) |
 | 4 | "We ask compute to be flexible for about two percent of the hours in the year. In exchange, it gets months of running time." | 2.0% часов года (160–177 ч на оператора, все 12) | **наш спайк**: топ-1% спроса ИЛИ топ-1% рампа, 12 операторов. Пересчитано мной 04:28: BPAT 160, остальные 175–177; отклонение ±2 ч зависит от метода квантиля. Подпись на слайде: "flex-worthy hours, 2025 EIA-930" |
-| 5 | "ERCOT has about 410 gigawatts of large-load requests on file — about 87% data centers — against 7.5 gigawatts actually approved to energize since 2022." | 410 GW vs 7.5 GW | `ercot-legislative-2026` (410 GW, ~87%, на 26.03.2026) + `ercot-constraints-2025` (7 502 MW с янв. 2022) |
+| 5 | "ERCOT has about 410 gigawatts of large-load requests on file — about 87% data centers — against 7.5 gigawatts actually approved to energize since 2022." | 410 GW vs 7.5 GW | `ercot-legislative-update-2026` (410 GW, ~87%, на 26.03.2026) + `ercot-constraints-2025` (7 502 MW с янв. 2022) |
 | 6 | "CAISO's peak in 2025 was 43,860 megawatts — and it arrived at eight in the evening, not at noon." | 43 860 MW, 2025-08-21 20:00 | **наш спайк** (real EIA-930). Пик — вечерний, поэтому гибкость ценна именно вечером |
 | 7 | "On 8 March 2025, CAISO's net load fell to minus 1,140 megawatts at one in the afternoon, then climbed 22,682 megawatts in six hours." | −1 140 → +22 682 MW | **наш спайк**: net load = demand − solar, 08.03.2025 13:00 → 19:00 |
 | 8 | "Five million dollars. That is what one megawatt of available capacity is worth, for three to four years." | $5M / MW / 3–4 года | **спич**, Arham, символы 20 085 (≈35.3%). Наш $1.2M/MW-год — это же число, поделённое на срок |
@@ -30,18 +30,20 @@
 
 ## Одна и та же петля, четыре региона (снимает «вы подогнали под Калифорнию»)
 
-| Регион | net value (агент) | baseline | ratio | MW @12 | violations |
+Все четыре перемерены финальной политикой `gen_6` — это и есть доказательство «без тюнинга».
+
+| Регион | ratio net | ratio MW·мес | net, $M | MW @12 | violations |
 |---|---|---|---|---|---|
-| CAL — CAISO | $202.4M | $65.1M | **3.11×** | 69.8 | 0 |
-| TEX — ERCOT | $231.9M | $89.2M | **2.60×** | 65.5 | 0 |
-| MIDA — PJM | $168.2M | $67.6M | **2.49×** | 48.8 | 0.2 |
-| MIDW — MISO | $192.2M | $71.7M | **2.68×** | 53.5 | 0 |
+| CAL — CAISO | **4.30×** | 3.82× | 279.91 | 85.4 | 0 |
+| TEX — ERCOT | **3.41×** | 2.79× | 304.46 | 84.1 | 0 |
+| MIDA — PJM | **4.07×** | 3.57× | 275.30 | 82.4 | 0 |
+| MIDW — MISO | **3.88×** | 3.33× | 277.84 | 81.3 | 0 |
 
-**Однострочник:** "Same loop, same parameters, four regions, no per-region tuning — two and a half
-to three times the value, and PJM's zero point two megawatt-hours is printed, not hidden."
+**Однострочник:** "The same policy, four operators, **three point four to four point three times**
+the value, and zero violations — no per-region tuning."
 
-> Произносите «zero point two megawatt-hours» сами, до вопроса. Это превращает единственную
-> зацепку судьи в ваш аргумент о честности.
+> Отдельная сила этой таблицы: MW@12 везде 81–85, violations везде 0. Одна политика, четыре разных
+> рынка. Это лучший ответ на «вы подогнали под один регион».
 
 ---
 

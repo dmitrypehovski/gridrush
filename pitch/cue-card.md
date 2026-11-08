@@ -1,6 +1,6 @@
 # GRIDRUSH — cue card
 
-**One page. Phone or print. Glance, do not read.**
+**One page. Phone or print. Glance, do not read.** Numbers frozen 2026-11-08.
 
 ---
 
@@ -12,56 +12,58 @@
 
 ### 0:20 — APPROACH *(click: map)*
 
-- "40 sites, 8 substations, **four choices per site**"
+- "**40 sites, 8 substations**, four choices per site"
 - "8,760 hours of 2025 — **violations and SLA**"
-- "real demand shape, synthetic geometry — **and we say so**"
+- "real demand data, synthetic geometry — **and we say so**"
 
 ### 0:50 — RESULT *(click: three-strategy card)*
 
 - firm: **0 MW**, $65M — "safe, and useless"
-- non-firm: **173 MW**, **−$205M** — "faster, and worse"
-- GRIDRUSH: **70 MW**, **+$202M**, no red
-- "**19 sites** — and no to twenty-one"
+- non-firm: **173 MW**, **−$450M** — "faster, and worse"
+- GRIDRUSH: **85 MW**, **+$280M**, no red
+- "**32 sites** — and no to eight"
 - "**2% of the hours** for months of running time"
 
-*(click: plan)* "**three times** more megawatt-months. no red."
-*(click: worst day)*
+*(click: plan)* "**four times** more value. no red."
+*(click: worst day)* "the naive plan **sheds 28 MW** — GRIDRUSH **never more than one**."
 
 ### 2:00 — LEARNING *(click: `Replay loop`)*
 
 - "**proposer, evaluator, repair, archive**"
-- "tonight's run, **not a mock-up**"
+- "**plateaus at 179** → the LLM rewrites the policy → **280**"
+- "**207 iterations**. tonight's run, not a mock-up."
 
-### 2:20 — EXPANDS *(three fingers)*
+### 2:30 — EXPANDS *(three fingers)*
 
 - "feeders / physics / signal"
-- "same loop, **four regions already**"
+- "**8 MW spare** on a real feeder; our five biggest sites need **32**"
+- "**a siting problem, not a megawatt problem**"
 
-### 2:50 — ASK
+### 2:55 — ASK
 
-- "**one utility engineer, one flex contract.** thank you."
+- "**one utility engineer, one flex contract.** thank you — repo is attached."
 
 ---
 
 ## THE 7 NUMBERS
 
 ```
-   3.1×      $202M      $65M      −$205M
-   70 MW     0 MW       19/40
+   4.3×      $280M      $65M      −$450M
+   85 MW     0 MW       32/40
 ```
 
-*(ratio · margin · firm margin · non-firm loss · MW@12 · firm MW@12 · sites)*
+*(net ratio · margin · firm margin · non-firm loss · MW@12 · firm MW@12 · sites)*
 
 ---
 
 ## IF YOU GET LOST — 3 phrases
 
 1. **"Three strategies, same forty sites."** → point at the card, carry on.
-2. **"Two numbers: zero megawatts at month twelve, and seventy."** → breathe.
+2. **"Zero megawatts at month twelve — and eighty-five."** → breathe.
 3. **"The loop gets better each run — let me show you the curve."** → click Replay loop.
 
 **Never say:** "real data" (sites are synthetic) · "zero violations" without **"in the model"** ·
-"we made $202M" (it is *modelled compute margin*) · any solar number.
+"we made $280M" (it is *modelled compute margin*) · any solar number.
 
 ---
 
@@ -74,8 +76,8 @@
 3. A verifier replays **all 8,760 hours of 2025** and checks violations and SLA — one evaluation,
    **under 100 milliseconds**.
 4. Three strategies, same sites: firm gives **0 MW** at month 12; all non-firm gives **173 MW** but
-   loses **$205M**; GRIDRUSH gives **70 MW** and **$202M** of modelled margin.
-5. **Zero violations in the model**, every site inside its SLA, and it connects **19 of 40** sites —
-   the agent can say no.
-6. Same loop, **four regions, no tuning: 2.5 to 3.1×**. Next: real feeders, AC power flow, real
-   price signals.
+   loses **$450M**; GRIDRUSH gives **85 MW** and **$280M** of modelled margin — **4.3×**.
+5. **Zero violations in the model**, every site inside its SLA, **32 of 40** sites — the agent can
+   say no.
+6. Same policy, **four operators, no tuning: 3.4 to 4.3× and zero violations**. Real AC power flow says **8 MW spare** on
+   one feeder versus **32 MW** for our five biggest sites: a siting problem, not a megawatt problem.

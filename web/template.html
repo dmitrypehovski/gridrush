@@ -115,6 +115,7 @@
   .chart svg{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible}
   .note{flex:0 0 auto;height:13px;font-size:9.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:13px}
   .note b{color:#8ea1bb;font-weight:650}
+  #map-note{white-space:normal;height:30px;line-height:15px;font-size:8px;overflow:hidden;color:#6e7f99}
 
   .seg{display:flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden;flex:0 0 auto}
   .seg button{background:transparent;border:0;color:#93a4bd;font-size:9px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;cursor:pointer;font-family:inherit}
@@ -316,7 +317,7 @@
 
   <section class="panel panel-stress">
     <div class="ph">
-      <div class="ptitle"><span class="step">4</span>Worst day</div>
+      <div class="ptitle"><span class="step">4</span>Worst day<span class="psub" id="stress-sub"></span></div>
       <div class="legend" id="stress-legend"></div>
     </div>
     <div class="chart" id="chart-stress"></div>
@@ -325,10 +326,12 @@
 
   <section class="panel panel-learn">
     <div class="ph">
-      <div class="ptitle"><span class="step">5</span>Agent learning<span class="psub">best policy score per iteration · $M net value</span></div>
+      <div class="ptitle"><span class="step">5</span>Agent learning<span class="psub">best score per iteration · $M</span></div>
       <div class="ph-right">
+        <div class="legend" id="learn-legend"></div>
         <div class="counter"><span class="clabel">iter</span><span class="cval" id="ctr-iter">&mdash;</span></div>
         <div class="counter"><span class="clabel">best</span><span class="cval" id="ctr-best">&mdash;</span></div>
+        <div class="counter"><span class="clabel">LLM gens</span><span class="cval" id="ctr-llm">&mdash;</span></div>
         <button class="btn" id="btn-replay" type="button">Replay loop</button>
       </div>
     </div>
@@ -895,8 +898,8 @@
     if (ns === null) ns = arr(D && D.sites).length;
     var nsub = num(meta.n_substations);
     if (ns) chips.push("<span class=\"chip\">" + fmtInt(ns) + " sites" + (nsub ? " / " + fmtInt(nsub) + " subst." : "") + "</span>");
-    var its = num(obj(meta).loop ? meta.loop.iters : null);
-    if (its === null) its = arr(D && D.iterations).length;
+    var its = arr(D && D.iterations).length;
+    if (!its) its = num(obj(meta).loop ? meta.loop.iters : null);
     if (its) chips.push("<span class=\"chip\">" + fmtInt(its) + " iterations</span>");
     if (meta.generated_at) {
       var ga = String(meta.generated_at).replace("T", " ").replace(/Z$/, " UTC").slice(0, 19);
@@ -917,23 +920,33 @@
       if (!d) return;
       var sc = num(d.score);
       if (sc === null) return;
-      out.push({ iter: num(d.iter) === null ? i : num(d.iter), score: sc, best: !!d.best });
+      out.push({
+        iter: num(d.iter) === null ? i : num(d.iter),
+        score: sc,
+        best: !!d.best,
+        llm: d.phase === "llm" || num(d.gen) !== null,
+        gen: num(d.gen)
+      });
     });
     out.sort(function (a, b) { return a.iter - b.iter; });
     return out;
   }
-  function setCounters(iterText, bestText) {
-    var a = document.getElementById("ctr-iter"), b = document.getElementById("ctr-best");
+  function setCounters(iterText, bestText, llmText) {
+    var a = document.getElementById("ctr-iter"), b = document.getElementById("ctr-best"), c = document.getElementById("ctr-llm");
     if (a) a.textContent = iterText;
     if (b) b.textContent = bestText;
+    if (c && llmText !== undefined) c.textContent = llmText;
   }
   function drawLearn(animate) {
     var el = document.getElementById("chart-learn");
     if (!el) return;
     var its = learnSeries();
+    var llmIts = its.filter(function (d) { return d.llm; });
+    var firstLlm = llmIts.length ? llmIts[0] : null;
+    var splitIter = firstLlm ? firstLlm.iter : null;
     if (its.length < 2) {
       placeholder(el, "Learning curve unavailable", "JSON needs iterations[] with >= 2 scores");
-      setCounters("\u2014", "\u2014");
+      setCounters("\u2014", "\u2014", "\u2014");
       var ln0 = document.getElementById("learn-note");
       if (ln0) ln0.textContent = "no iterations in data";
       return;
@@ -949,7 +962,18 @@
     if (ymax - ymin < 1e-6) { ymax += 1; ymin -= 1; }
     var pad = (ymax - ymin) * 0.10;
     var y0 = ymin - pad, y1 = ymax + pad;
-    var sx = function (v) { return mg.l + (v - x0) / (x1 - x0) * iw; };
+    var xSplit = firstLlm ? mg.l + iw * 0.74 : null;
+    var sx;
+    if (firstLlm) {
+      var preSpan = Math.max(1e-9, splitIter - x0);
+      var postSpan = Math.max(1e-9, x1 - splitIter);
+      sx = function (v) {
+        if (v <= splitIter) return mg.l + (v - x0) / preSpan * (xSplit - mg.l);
+        return xSplit + (v - splitIter) / postSpan * (w - mg.r - xSplit);
+      };
+    } else {
+      sx = function (v) { return mg.l + (v - x0) / (x1 - x0) * iw; };
+    }
     var sy = function (v) { return mg.t + (1 - (v - y0) / (y1 - y0)) * ih; };
 
     el.innerHTML = "";
@@ -962,13 +986,18 @@
       svg.appendChild(svgEl("line", { x1: mg.l, y1: y, x2: w - mg.r, y2: y, "class": "grid-line" }));
       txt(svg, mg.l - 6, y + 3.4, moneyTick(t), "ax-label ax-right");
     });
-    var nt = its.length >= 6 ? 6 : its.length;
-    for (var k = 0; k < nt; k++) {
-      var v = x0 + (x1 - x0) * k / (nt - 1);
+    var xTicks = [];
+    if (firstLlm) {
+      [0, 50, 100, 150, 200].forEach(function (v) { if (v >= x0 && v <= splitIter) xTicks.push(v); });
+    } else {
+      var nt = its.length >= 6 ? 6 : its.length;
+      for (var k = 0; k < nt; k++) xTicks.push(Math.round(x0 + (x1 - x0) * k / (nt - 1)));
+    }
+    xTicks.forEach(function (v) {
       var x = sx(v);
       svg.appendChild(svgEl("line", { x1: x, y1: mg.t, x2: x, y2: h - mg.b, "class": "grid-line minor" }));
-      txt(svg, x, h - mg.b + 14, fmtInt(Math.round(v)), "ax-label ax-center");
-    }
+      txt(svg, x, h - mg.b + 14, fmtInt(v), "ax-label ax-center");
+    });
     txt(svg, mg.l, mg.t - 1, "$M NET VALUE", "ax-title");
     txt(svg, w - mg.r, h - 3, "iteration", "ax-label ax-end");
 
@@ -1013,34 +1042,76 @@
     txt(bestG, labelX, labelY, "best " + money(bestPt.score), "best-label", { "text-anchor": anchor });
     svg.appendChild(bestG);
 
+    /* LLM phase: cyan markers + divider */
+    var llmG = svgEl("g", { opacity: animate ? "0" : "1" });
+    llmIts.forEach(function (d) {
+      llmG.appendChild(svgEl("circle", {
+        cx: sx(d.iter).toFixed(1), cy: sy(d.score).toFixed(1), r: 2.7,
+        fill: "#22d3ee", stroke: "#0b1119", "stroke-width": "1"
+      }));
+    });
+    svg.appendChild(llmG);
+    if (firstLlm) {
+      var xL = sx(firstLlm.iter);
+      svg.appendChild(svgEl("line", {
+        x1: xL, y1: mg.t, x2: xL, y2: h - mg.b,
+        stroke: "#22d3ee", "stroke-width": "1", "stroke-dasharray": "3 4", opacity: "0.5"
+      }));
+      txt(svg, xL + 5, mg.t + 10, "LLM phase \u00b7 " + fmtInt(llmIts.length) + " generations", "ref-label", { fill: "#67e8f9", "font-size": "8.5px" });
+      txt(svg, mg.l + 2, mg.t + 10, "parametric mutator \u00b7 " + fmtInt(its.length - llmIts.length) + " iterations", "ref-label", { fill: "#6f819b", "font-size": "8.5px" });
+    }
+
     var len = 0;
     try { len = line.getTotalLength(); } catch (e) { len = iw * 1.5; }
     line.style.strokeDasharray = len + " " + len;
     line.style.strokeDashoffset = animate ? String(len) : "0";
 
-    /* note */
+    /* note + LLM legend */
+    var meta = obj(D && D.meta), loopMeta = obj(meta.loop);
+    var llmMeta = obj(loopMeta.llm);
+    var genList = arr(llmMeta.generations);
+    var nGens = genList.length || llmIts.length;
+    var preLlmScore = null;
+    if (firstLlm) {
+      var pre = its.filter(function (d) { return d.iter < firstLlm.iter; });
+      if (pre.length) preLlmScore = Math.max.apply(null, pre.map(function (d) { return d.score; }));
+    }
+    var legendEl = document.getElementById("learn-legend");
+    if (legendEl) {
+      var lg = "";
+      if (nGens) {
+        lg = "<span><i style=\"background:#22d3ee\"></i>" + fmtInt(nGens) + " LLM generations";
+        if (preLlmScore !== null) {
+          lg += " \u00b7 policy rewritten: $" + Math.round(preLlmScore) + "M \u2192 $" + Math.round(bestPt.score) + "M";
+        }
+        lg += "</span>";
+      }
+      legendEl.innerHTML = lg;
+    }
     var note = document.getElementById("learn-note");
     if (note) {
-      var meta = obj(D && D.meta), loop = obj(meta.loop);
-      var wall = num(loop.wall_s), evals = num(loop.n_evals) || its.length;
+      var wall = num(loopMeta.wall_s);
+      var params = obj(obj(D && D.best).params);
+      var policy = params.policy ? String(params.policy) : (params.search ? String(params.search) : "evolutionary search");
       note.innerHTML = "start <b>" + money(its[0].score) + "</b> \u2192 best <b>" + money(bestPt.score) + "</b> at iter <b>" +
-        fmtInt(bestPt.iter) + "</b> \u00b7 " + fmtInt(evals) + " evaluations" +
-        (wall !== null ? " in " + fmtNum(wall, 2) + " s" : "") +
-        " \u00b7 best policy: " + esc(obj(obj(D && D.best).params).search || "evolutionary search");
+        fmtInt(bestPt.iter) + "</b> \u00b7 <b>" + fmtInt(its.length) + " iterations</b> \u00b7 <b>" +
+        fmtInt(nGens) + " LLM generations</b>" +
+        (wall !== null ? " \u00b7 " + fmtNum(wall, 2) + " s" : "") +
+        " \u00b7 policy: " + esc(policy);
     }
 
     if (animate) {
       var ctx = {
-        its: its, line: line, area: area, dot: dot, len: len, bestG: bestG,
-        w: w, h: h, mg: mg, sx: sx, sy: sy, y0: y0, y1: y1
+        its: its, line: line, area: area, dot: dot, len: len, bestG: bestG, llmG: llmG,
+        nGens: nGens, w: w, h: h, mg: mg, sx: sx, sy: sy, y0: y0, y1: y1
       };
-      setCounters(fmtInt(its[0].iter) + " / " + fmtInt(its[its.length - 1].iter), money(its[0].score));
+      setCounters("1 / " + fmtInt(its.length), money(its[0].score), "0");
       startLearnAnim(ctx);
     } else {
       area.style.opacity = "0.9";
       dot.style.opacity = "1";
       dot.setAttribute("cx", bx); dot.setAttribute("cy", byy);
-      setCounters(fmtInt(its[its.length - 1].iter) + " / " + fmtInt(its[its.length - 1].iter), money(its[bestIdx].score));
+      setCounters(fmtInt(its.length) + " / " + fmtInt(its.length), money(its[bestIdx].score), fmtInt(nGens));
     }
   }
   function startLearnAnim(ctx) {
@@ -1050,6 +1121,9 @@
     var dur = Math.max(1600, Math.min(3000, 900 + n * 9));
     var t0 = performance.now();
     var lastIdx = -1;
+    var llmPrefix = [];
+    var acc = 0;
+    for (var pi = 0; pi < n; pi++) { if (its[pi].llm) acc++; llmPrefix.push(acc); }
     function bestSoFar(idx) {
       var b = its[0].score;
       for (var i = 1; i <= idx; i++) if (its[i].score > b) b = its[i].score;
@@ -1057,7 +1131,7 @@
     }
     function frame(now) {
       try {
-        var t = Math.min(1, (now - t0) / dur);
+        var t = Math.max(0, Math.min(1, (now - t0 - 130) / dur));
         var p = 1 - Math.pow(1 - t, 3);
         ctx.line.style.strokeDashoffset = String(ctx.len * (1 - p));
         ctx.area.style.opacity = String(0.9 * p);
@@ -1069,14 +1143,15 @@
         var idx = isFinite(rawIdx) ? Math.max(0, Math.min(n - 1, rawIdx)) : 0;
         if (idx !== lastIdx) {
           lastIdx = idx;
-          setCounters(fmtInt(its[idx].iter) + " / " + fmtInt(its[n - 1].iter), money(bestSoFar(idx)));
+          setCounters(fmtInt(idx + 1) + " / " + fmtInt(n), money(bestSoFar(idx)), fmtInt(llmPrefix[idx] || 0));
         }
         if (t < 1) {
           learnAnim.raf = requestAnimationFrame(frame);
         } else {
           learnAnim.playing = false;
           ctx.bestG.style.opacity = "1";
-          setCounters(fmtInt(its[n - 1].iter) + " / " + fmtInt(its[n - 1].iter), money(bestSoFar(n - 1)));
+          if (ctx.llmG) ctx.llmG.style.opacity = "1";
+          setCounters(fmtInt(n) + " / " + fmtInt(n), money(bestSoFar(n - 1)), fmtInt(ctx.nGens || llmPrefix[n - 1] || 0));
           setDiag();
         }
       } catch (e) {
@@ -1295,7 +1370,7 @@
     var t0 = performance.now(), dur = 1500;
     function frame(now) {
       try {
-        var t = Math.min(1, (now - t0) / dur), p = 1 - Math.pow(1 - t, 3);
+        var t = Math.max(0, Math.min(1, (now - t0) / dur)), p = 1 - Math.pow(1 - t, 3);
         lines.forEach(function (ln) {
           var len = 0;
           try { len = ln.path.getTotalLength(); } catch (e) { len = 1000; }
@@ -1487,8 +1562,19 @@
      3) Map
      ===================================================================== */
   function mapBadgeMode(mode) { return MODES[mode] || MODES.skip; }
+  /* flex sites are colored by their SLA commitment: dark = 99.99%, mid = 99.9%, light = 99% */
+  function siteColor(r) {
+    if (!r) return MODES.skip.c;
+    if (r.mode === "flex" && r.sla !== null) {
+      if (r.sla >= 0.99985) return "#c2410c";
+      if (r.sla >= 0.9995) return "#f59e0b";
+      return "#fde68a";
+    }
+    return MODES[r.mode] ? MODES[r.mode].c : MODES.skip.c;
+  }
   function tipHTML(r) {
     var mode = mapBadgeMode(r.mode);
+    var dotColor = siteColor(r);
     var rows = [
       ["mode", r.mode],
       ["MW", r.mw !== null ? fmtNum(r.mw, 2) : "\u2014"],
@@ -1502,8 +1588,8 @@
       ["Hmax", r.hmax !== null ? fmtNum(r.hmax, 1) + " MW" : "\u2014"]
     ];
     return "<div class=\"tt\"><span>" + esc(r.id) + "</span>" +
-      "<span class=\"badge\" style=\"background:" + hexA(mode.c, 0.16) + ";color:" + mode.c +
-      ";border:1px solid " + hexA(mode.c, 0.4) + "\">" + esc(mode.l) + "</span></div>" +
+      "<span class=\"badge\" style=\"background:" + hexA(dotColor, 0.18) + ";color:" + dotColor +
+      ";border:1px solid " + hexA(dotColor, 0.45) + "\">" + esc(mode.l) + "</span></div>" +
       rows.map(function (kv) {
         return "<div class=\"trow\"><span class=\"tk\">" + kv[0] + "</span><span class=\"tv\">" + esc(kv[1]) + "</span></div>";
       }).join("");
@@ -1547,9 +1633,24 @@
   }
   function mapLegendHTML(rows) {
     var counts = modeCounts(rows);
-    return ["firm", "flex", "battery", "skip"].map(function (mk) {
-      return "<span style=\"margin-right:9px\"><i style=\"background:" + MODES[mk].c + "\"></i>" + MODES[mk].l + " " + counts[mk] + "</span>";
-    }).join("");
+    var flex = rows.filter(function (r) { return r.mode === "flex"; });
+    function slaCount(v) {
+      return flex.filter(function (r) { return r.sla !== null && Math.abs(r.sla - v) < 1e-9; }).length;
+    }
+    var l1 = [], l2 = [];
+    if (flex.length) {
+      l1.push("<span style=\"margin-right:8px\"><i style=\"background:" + MODES.flex.c + "\"></i>flex " + counts.flex + "</span>");
+      l1.push("<span style=\"margin-right:7px\"><i style=\"background:#c2410c\"></i>99.99% \u00d7" + slaCount(0.9999) + "</span>");
+      l1.push("<span style=\"margin-right:7px\"><i style=\"background:#f59e0b\"></i>99.9% \u00d7" + slaCount(0.999) + "</span>");
+      l1.push("<span style=\"margin-right:7px\"><i style=\"background:#fde68a\"></i>99% \u00d7" + slaCount(0.99) + "</span>");
+      l2.push("amber shade = SLA commitment");
+    } else {
+      l1.push("<span style=\"margin-right:8px\"><i style=\"background:" + MODES.firm.c + "\"></i>firm " + counts.firm + "</span>");
+      l1.push("<span style=\"margin-right:8px\"><i style=\"background:" + MODES.battery.c + "\"></i>battery " + counts.battery + "</span>");
+    }
+    l1.push("<span style=\"margin-right:8px\"><i style=\"background:" + MODES.skip.c + "\"></i>skip " + counts.skip + "</span>");
+    l2.push("radius ~ MW \u00b7 hover for details");
+    return l1.join("") + "<br>" + l2.join(" &middot; ");
   }
   function drawMap() {
     var el = document.getElementById("chart-map");
@@ -1558,7 +1659,7 @@
     var rows = siteRows();
     var subEl = document.getElementById("map-sub");
     var noteEl = document.getElementById("map-note");
-    if (noteEl) noteEl.innerHTML = mapLegendHTML(rows) + " &nbsp;&middot;&nbsp; radius ~ MW &middot; hover for details";
+    if (noteEl) noteEl.innerHTML = mapLegendHTML(rows);
     if (!rows.length) {
       placeholder(el, "Site data unavailable", "JSON has no sites[] / best.sites[]");
       if (subEl) subEl.textContent = "no sites in data";
@@ -1577,7 +1678,7 @@
     if (subEl) {
       subEl.textContent = schematic
         ? "schematic layout \u00b7 x/y not in data"
-        : "synthetic site geometry, not a geographic map";
+        : "synthetic geometry \u00b7 amber shade = SLA commitment";
     }
     var pos = {};
     if (!schematic) {
@@ -1679,12 +1780,11 @@
     ordered.forEach(function (r) {
       var p = pos[r.id];
       if (!p) return;
-      var mode = mapBadgeMode(r.mode);
       var isSkip = r.mode === "skip";
       var rad = isSkip ? 2.4 : clamp(3.2 + 5.2 * Math.sqrt(Math.max(0.5, r.mw) / 10), 3.2, 8.6);
       var c = svgEl("circle", {
-        cx: p.x, cy: p.y, r: rad, "class": "site", fill: mode.c,
-        "fill-opacity": isSkip ? "0.45" : "0.92"
+        cx: p.x, cy: p.y, r: rad, "class": "site", fill: siteColor(r),
+        "fill-opacity": isSkip ? "0.45" : "0.95"
       });
       c.__row = r;
       svg.appendChild(c);
@@ -1703,7 +1803,7 @@
     var subEl = document.getElementById("map-sub");
     var noteEl = document.getElementById("map-note");
     var allRows = siteRows();
-    if (noteEl) noteEl.innerHTML = mapLegendHTML(allRows) + " &nbsp;&middot;&nbsp; hover for details";
+    if (noteEl) noteEl.innerHTML = mapLegendHTML(allRows);
     if (!rows.length) {
       placeholder(el, "Per-site availability unavailable", "best.sites[].avail / mw missing in JSON");
       if (subEl) subEl.textContent = "SLA data unavailable";
@@ -1757,11 +1857,10 @@
     var ordered = rows.slice().sort(function (a, b) { return a.mw - b.mw; });
     var labelCount = 0;
     ordered.forEach(function (r) {
-      var mode = mapBadgeMode(r.mode);
       var rad = clamp(3 + 3.4 * Math.sqrt(r.mw / 8), 3, 8);
       var x = sx(r.avail * 100), y = sy(r.mw);
       var c = svgEl("circle", {
-        cx: x, cy: y, r: rad, "class": "site", fill: mode.c, "fill-opacity": "0.92"
+        cx: x, cy: y, r: rad, "class": "site", fill: siteColor(r), "fill-opacity": "0.95"
       });
       c.__row = r;
       svg.appendChild(c);
@@ -1794,7 +1893,8 @@
   function stressModel() {
     var sd = obj(obj(D && D.grid).stress_day);
     if (!Object.keys(sd).length) return null;
-    var hours = arr(sd.hours).map(num);
+    var hoursRaw = arr(sd.hours).length ? arr(sd.hours) : arr(sd.local_hours);
+    var hours = hoursRaw.map(num);
     var demMW = arr(sd.demand_mw).map(num);
     var solMW = arr(sd.solar_mw).map(num);
     var demIdx = arr(sd.demand_index).map(num);
@@ -1888,6 +1988,7 @@
     var el = document.getElementById("chart-stress");
     if (!el) return;
     var st = stressModel();
+    var subEl = document.getElementById("stress-sub");
     var noteEl = document.getElementById("stress-note");
     var legendEl = document.getElementById("stress-legend");
     if (!st) {
@@ -1898,16 +1999,16 @@
     }
     if (legendEl) {
       legendEl.innerHTML =
-        "<span><i style=\"background:#fb7185\"></i>demand</span>" +
-        "<span><i style=\"background:#fbbf24\"></i>solar</span>" +
-        (st.headroom ? "<span><i style=\"background:#22d3ee\"></i>headroom</span>" : "") +
-        (st.curtail ? "<span><i style=\"background:#2dd4a7\"></i>agent curtail</span>" : "") +
-        (st.curtailNaive ? "<span><i style=\"background:#ef4444\"></i>naive curtail</span>" : "");
+        "<span style=\"margin-right:8px\"><i style=\"background:#fb7185\"></i>demand</span>" +
+        (st.headroom ? "<span style=\"margin-right:8px\"><i style=\"background:#22d3ee\"></i>headroom</span>" : "") +
+        (st.curtail ? "<span style=\"margin-right:8px\"><i style=\"background:#2dd4a7\"></i>GRIDRUSH</span>" : "") +
+        (st.curtailNaive ? "<span style=\"margin-right:8px\"><i style=\"background:#ef4444\"></i>naive</span>" : "");
     }
+    if (subEl) subEl.textContent = st.date ? String(st.date) : "";
     var m = measure(el), w = m.w, h = m.h;
     var mg = { l: 40, r: 44, t: 11, b: 21 };
     var iw = Math.max(20, w - mg.l - mg.r), ih = Math.max(10, h - mg.t - mg.b);
-    var lVals = st.demand.concat(st.solar).filter(function (v) { return v !== null; });
+    var lVals = st.demand.filter(function (v) { return v !== null; });
     var lMin = Math.min.apply(null, lVals);
     var lMax = Math.max.apply(null, lVals);
     if (lMax - lMin < 1e-9) { lMax += 1; }
@@ -2022,10 +2123,8 @@
       }));
     }
 
-    /* demand & solar (left axis) */
-    svg.appendChild(svgEl("path", { d: areaFor(st.solar, syL), fill: "#fbbf24", opacity: "0.09" }));
-    svg.appendChild(svgEl("path", { d: pathFor(st.demand, syL), fill: "none", stroke: "#fb7185", "stroke-width": "1.9", "stroke-linejoin": "round" }));
-    svg.appendChild(svgEl("path", { d: pathFor(st.solar, syL), fill: "none", stroke: "#fbbf24", "stroke-width": "1.3" }));
+    /* demand (left axis) */
+    svg.appendChild(svgEl("path", { d: pathFor(st.demand, syL), fill: "none", stroke: "#fb7185", "stroke-width": "2", "stroke-linejoin": "round" }));
 
     /* headroom (right axis, dashed) */
     if (st.headroom) {
@@ -2035,48 +2134,47 @@
       }));
     }
 
-    /* peak marker */
+    function idxOfHour(hh) {
+      for (var i = 0; i < st.n; i++) if (st.hours[i] === hh) return i;
+      return -1;
+    }
+    function vAt(list, idx) {
+      return (list && idx >= 0 && idx < list.length && list[idx] !== null) ? list[idx] : null;
+    }
+    var i18 = idxOfHour(18), i20 = idxOfHour(20);
+    var n18 = vAt(st.curtailNaive, i18), a18 = vAt(st.curtail, i18);
+    var n20 = vAt(st.curtailNaive, i20), a20 = vAt(st.curtail, i20);
+
+    /* peak marker (20:00 in the real CAISO shape) */
     if (st.maxDemand !== null) {
       var peakIdx = -1, pv = -Infinity;
       st.demand.forEach(function (v, i) { if (v !== null && v > pv) { pv = v; peakIdx = i; } });
       if (peakIdx >= 0) {
         var px = sx(peakIdx);
-        svg.appendChild(svgEl("line", { x1: px, y1: mg.t, x2: px, y2: h - mg.b, stroke: "#7f1d1d", "stroke-width": "1", "stroke-dasharray": "2 4", opacity: "0.5" }));
-        txt(svg, px + 3, mg.t + 8, "peak", "ref-label", { fill: "#b96a6a" });
+        svg.appendChild(svgEl("line", { x1: px, y1: mg.t, x2: px, y2: h - mg.b, stroke: "#7f1d1d", "stroke-width": "1", "stroke-dasharray": "2 4", opacity: "0.45" }));
       }
     }
 
-    /* callout at the worst curtailment hour (prefer 20:00 if present) */
-    if (st.curtailNaive || st.curtail) {
-      var pick = -1, bestCur = 0;
-      for (var ci = 0; ci < st.n; ci++) {
-        if (st.hours[ci] === 20) { pick = ci; break; }
-        var cv = Math.max(
-          st.curtailNaive && st.curtailNaive[ci] !== null ? st.curtailNaive[ci] : 0,
-          st.curtail && st.curtail[ci] !== null ? st.curtail[ci] : 0
-        );
-        if (cv > bestCur) { bestCur = cv; pick = ci; }
-      }
-      if (pick >= 0) {
-        var ax = sx(pick);
-        var anchor = ax > mg.l + iw * 0.6 ? "end" : "start";
-        var tx = ax + (anchor === "end" ? -6 : 6);
-        var nvv = st.curtailNaive && st.curtailNaive[pick] !== null ? st.curtailNaive[pick] : null;
-        var avv = st.curtail && st.curtail[pick] !== null ? st.curtail[pick] : null;
-        var ty2 = yZero - 8, ty1 = yZero - 19;
-        if (ty1 < mg.t + 10) { ty1 = mg.t + 10; ty2 = mg.t + 21; }
-        if (nvv !== null) txt(svg, tx, ty1, "naive " + fmtNum(nvv, 1) + " MW", "ref-label", { "text-anchor": anchor, fill: "#fda4af" });
-        if (avv !== null) txt(svg, tx, ty2, "agent " + fmtNum(avv, 1) + " MW", "ref-label", { "text-anchor": anchor, fill: "#6ee7b7" });
-      }
+    /* labels directly on the curtailment lines at 18:00 — the strongest moment */
+    if (i18 >= 0) {
+      var x18 = sx(i18);
+      var anchor18 = x18 > mg.l + iw * 0.62 ? "end" : "start";
+      var tx18 = x18 + (anchor18 === "end" ? -6 : 6);
+      if (n18 !== null) txt(svg, tx18, syR(n18) - 7, "18:00 \u00b7 naive " + fmtNum(n18, 1) + " MW", "ref-label", { "text-anchor": anchor18, fill: "#fda4af", "font-size": "9.5px", "font-weight": "700" });
+      if (a18 !== null) txt(svg, tx18, syR(a18) - 7, "GRIDRUSH " + fmtNum(a18, 1) + " MW", "ref-label", { "text-anchor": anchor18, fill: "#6ee7b7", "font-size": "9.5px", "font-weight": "700" });
+    }
+    /* 20:00 peak values as a quiet caption inside the chart */
+    if (i20 >= 0 && (n20 !== null || a20 !== null)) {
+      var peakRaw = st.peakDemand !== null ? st.peakDemand : (st.maxDemand !== null ? st.maxDemand * (st.unit === "GW" ? 1000 : 1) : null);
+      var capTxt = "20:00 peak " + (peakRaw !== null ? fmtInt(peakRaw) + " MW" : "") +
+        " \u00b7 naive " + (n20 !== null ? fmtNum(n20, 1) : "\u2014") +
+        " vs GRIDRUSH " + (a20 !== null ? fmtNum(a20, 1) : "\u2014") + " MW";
+      txt(svg, mg.l + 4, mg.t + 10, capTxt, "ref-label", { fill: "#7b8ba3", "font-size": "8.5px", "paint-order": "stroke", stroke: "#0b121b", "stroke-width": "2.5px" });
     }
 
     if (noteEl) {
-      var bits = [];
-      bits.push((st.date ? st.date + " \u00b7 " : "") + "real 2025 " + regionName() + " data; synthetic site geometry");
-      bits.push("required curtailment = model output");
-      if (st.estimated) bits.push("headroom estimated from site geometry");
-      if (st.peakDemand !== null) bits.push("peak " + fmtInt(st.peakDemand) + " MW");
-      noteEl.textContent = bits.join(" \u00b7 ");
+      noteEl.textContent = "required curtailment, model output \u00b7 real 2025 demand shape" +
+        (st.estimated ? " \u00b7 headroom estimated from site geometry" : "");
     }
   }
 
@@ -2181,7 +2279,9 @@
     var pending = 0;
     initBarsControls();
     initMapControls();
-    renderAll(firstRender);
+    /* По загрузке страница показывает ГОТОВОЕ состояние (полная кривая, LLM-точки,
+       финальные счётчики). Анимация запускается только кнопкой Replay loop. */
+    renderAll(false);
     firstRender = false;
     /* запоминаем стартовые размеры: первый вызов ResizeObserver не должен
        перерисовывать и обрывать вступительную анимацию */

@@ -1,22 +1,22 @@
-"""GRIDRUSH — параметризованная политика «что подключать и как».
+"""GRIDRUSH — parameterized policy: what to connect, and how.
 
-Политика получает кривые headroom по сайтам и их фичи, и возвращает портфель:
+The policy takes per-site headroom curves plus site features and returns a portfolio:
 [{"site_id", "mode": "skip|firm|flex|battery", "mw", "sla", "battery_mwh"}]
 
-Она НЕ считает прибыль окончательно — окончательный счёт даёт sim.engine.evaluate().
-Политика — эвристика с 9 параметрами в [0,1], которые ищет луп.
+It does NOT price the portfolio — sim.engine.evaluate() is the source of truth.
+The policy is a heuristic over 9 parameters in [0,1], searched by the loop.
 
-Ключевая идея модели (CONTRACT §2):
-- firm-мощность ограничена МИНИМУМОМ свободного headroom за год (нельзя куртейлить) → она
-  маленькая и её ждут 18–36 месяцев;
-- flex/step-up может взять МНОГО MW уже через 5–10 месяцев, но обязан снижать нагрузку в
-  стресс-часы; сколько часов в год допустимо — это SLA сайта;
-- SLA — это выбор с ценой: 99.99% (0.88 ч/год) платит премию ×1.25, 99.9% — ×1.0,
-  99% (87.6 ч/год) — ×0.8 (со сцены: «за 6 nines платят премию»);
-- батарея закрывает дефицит в стресс-часы, но стоит capex.
+Core model idea (CONTRACT §2):
+- firm capacity is capped by the MINIMUM headroom in the year (no curtailment allowed) -> it is
+  small, and you wait 18-36 months for it;
+- flex / step-up can take MANY MW after 5-10 months, but must reduce load in stress hours;
+  how many hours a year is acceptable is the site SLA;
+- SLA is a priced choice: 99.99% (0.88 h/yr) pays a x1.25 premium, 99.9% x1.0,
+  99% (87.6 h/yr) x0.8 ("you get a premium for six nines" — from the stage);
+- a battery covers the deficit in stress hours, but costs capex.
 
-Поэтому политика — это торг: на «спокойных» сайтах берём 99.99% и много MW, на
-перегруженных — либо меньше MW при высоком SLA, либо 99% и быстрые месяцы.
+So the policy is a trade: on calm sites take 99.99% and many MW; on congested ones
+either fewer MW at a high SLA, or 99% and fast months.
 """
 
 from __future__ import annotations
@@ -24,36 +24,36 @@ from __future__ import annotations
 import numpy as np
 
 PARAM_NAMES = [
-    "target_frac",   # какую долю max_mw сайта целимся подключить
-    "sla_bias",      # сдвиг предпочтения SLA (ниже = жаднее к доступности)
-    "speed_w",       # вес скорости подключения (раньше = ценнее)
-    "firm_w",        # премия за firm (нет куртейлмента) / за надёжность
-    "battery_w",     # готовность платить за батарею
-    "risk_w",        # штраф за риск куртейлмента сверх цены SLA
-    "size_w",        # предпочтение крупных сайтов
-    "wait_w",        # штраф за долгое ожидание (общий, поверх speed)
-    "sub_order",     # порядок подстанций: 0 = побольше headroom, 1 = поменьше стресса
+    "target_frac",   # fraction of the site max_mw we target
+    "sla_bias",      # SLA preference shift (lower = greedier about availability)
+    "speed_w",       # weight on connection speed (earlier = more valuable)
+    "firm_w",        # premium for firm (no curtailment) / reliability
+    "battery_w",     # willingness to pay for a battery
+    "risk_w",        # penalty for curtailment risk beyond the SLA price
+    "size_w",        # preference for larger sites
+    "wait_w",        # penalty for long waits (on top of speed)
+    "sub_order",     # substation order: 0 = most headroom first, 1 = least stress first
 ]
 
 D = len(PARAM_NAMES)
 
-# Реальные параметры экономики (см. CONTRACT §1). $M.
+# Real economics (see CONTRACT §1), in $M.
 REV_PER_MW_MONTH = 0.10
 BAT_CAPEX_MW = 0.35
 BAT_CAPEX_MWH = 0.25
 HORIZON = 36.0
 
-# (sla, допустимые часы куртейлмента в год, множитель цены compute)
+# (sla, allowed curtailment hours per year, compute-price multiplier)
 SLA_LEVELS = [(0.9999, 0.876, 1.25), (0.999, 8.76, 1.00), (0.99, 87.6, 0.80)]
 SLA_BY_INDEX = {lvl[0]: lvl for lvl in SLA_LEVELS}
 
 
 def decode(p: np.ndarray) -> dict:
-    """[0,1]^D → осмысленные параметры."""
+    """[0,1]^D -> meaningful parameters."""
     p = np.clip(np.asarray(p, dtype=float), 0.0, 1.0)
     return {
         "target_frac": 0.30 + 0.70 * p[0],
-        "sla_bias": -1.0 + 2.0 * p[1],     # >0 → предпочитает высокий SLA
+        "sla_bias": -1.0 + 2.0 * p[1],     # >0 -> prefers a high SLA
         "speed_w": -1.0 + 2.0 * p[2],
         "firm_w": -0.5 + 1.5 * p[3],
         "battery_w": -1.0 + 2.0 * p[4],
@@ -77,12 +77,12 @@ def _site_priority(curves: dict, i: int, par: dict) -> float:
 
 
 def _flex_option(R_sorted: np.ndarray, target: float, par: dict, sla_level: tuple) -> dict:
-    """Вариант flex для КОНКРЕТНОГО уровня SLA.
+    """Flex option for a SPECIFIC SLA level.
 
-    Возвращает {"mw","sla","budget","avail","k_hours"} или {} если нереально.
+    Returns {"mw","sla","budget","avail","k_hours"} or {} if infeasible.
     """
     sla, budget_h, rev_mult = sla_level
-    # sla_bias > 0 → урезаем допустимый куртейлмент (боимся риска)
+    # sla_bias > 0 -> shrink the allowed curtailment (we fear risk)
     bias = 0.5 + 0.5 * par["sla_bias"]
     eff_budget = budget_h * bias
     nb = int(np.clip(np.floor(eff_budget), 0, len(R_sorted) - 1))
@@ -98,12 +98,12 @@ def _flex_option(R_sorted: np.ndarray, target: float, par: dict, sla_level: tupl
 
 def build_portfolio(curves: dict, params: np.ndarray | dict,
                     sub_limit_mw: float | None = None) -> list[dict]:
-    """Строит портфель жадно по подстанциям с общим остатком headroom.
+    """Builds the portfolio greedily per substation with a shared headroom remainder.
 
-    `sub_limit_mw` — необязательный жёсткий лимит суммарной НОВОЙ нагрузки на подстанцию.
-    Если задан, конструктор никогда его не превышает, поэтому физическое ограничение
-    (например, измеренный AC power-flow лимит фидера) действует внутри политики, а не
-    наказывается постфактум. По умолчанию None — поведение прежнее.
+    `sub_limit_mw` — optional hard cap on the TOTAL new load on a substation.
+    When set, the builder never exceeds it, so a physical constraint (e.g. the measured
+    AC power-flow limit of a feeder) acts inside the policy instead of being punished
+    afterwards. Default None — previous behaviour.
     """
     par = decode(params) if not isinstance(params, dict) else params
     n = len(curves["ids"])
@@ -144,18 +144,18 @@ def build_portfolio(curves: dict, params: np.ndarray | dict,
             continue
         R_sorted = np.sort(R)
 
-        # --- FIRM: без куртейлмента, максимум по минимуму headroom за год.
-        # 0.02 MW зазор, чтобы округления не дали violation в независимом verifier.
+        # --- FIRM: no curtailment, maximum is the minimum headroom over the year.
+        # 0.02 MW margin so rounding cannot produce a violation in the independent verifier.
         firm_mw = float(min(target, max(0.0, R_sorted[0] - 0.02)))
         firm_mw = float(np.floor(firm_mw * 100.0) / 100.0)
         v_firm = -1e9
         if firm_mw >= min_mw:
             mon = max(0.0, HORIZON - float(T_firm[i]))
-            v_firm = REV_PER_MW_MONTH * 1.25 * firm_mw * mon   # firm = 99.99%, премия
+            v_firm = REV_PER_MW_MONTH * 1.25 * firm_mw * mon   # firm = 99.99%, premium
             v_firm *= 1.0 + par["speed_w"] * (mon / HORIZON)
             v_firm += par["firm_w"] * firm_mw * 2.0
 
-        # --- FLEX: по каждому уровню SLA; учитываем скорость step-up
+        # --- FLEX: per SLA level; the step-up speed counts
         v_flex, flex_mw, flex_sla, flex_avail = -1e9, 0.0, 0.999, 1.0
         mon_flex = max(0.0, HORIZON - float(T_flex[i]))
         for lvl in SLA_LEVELS:
@@ -163,7 +163,7 @@ def build_portfolio(curves: dict, params: np.ndarray | dict,
             opt = _flex_option(R_sorted, target, par, lvl)
             if not opt:
                 continue
-            # пересчитываем value под этот SLA (в _flex_option он усреднён — сделаем явно)
+            # recompute value for this SLA (in _flex_option it is averaged — make it explicit)
             mw = opt["mw"]
             v = REV_PER_MW_MONTH * rev_mult * mw * mon_flex / HORIZON
             v *= 1.0 + par["speed_w"] * (mon_flex / HORIZON)
@@ -172,10 +172,10 @@ def build_portfolio(curves: dict, params: np.ndarray | dict,
             if v > v_flex:
                 v_flex, flex_mw, flex_sla, flex_avail = v, mw, opt["sla"], opt["avail"]
 
-        # --- BATTERY: целевой MW, дефицит закрываем батареей (по самому дешёвому SLA)
+        # --- BATTERY: target MW, deficit covered by the battery (at the cheapest SLA)
         bat_mw = float(min(target, max(0.0, float(np.max(R)))))
-        # engine: батарея имеет ДНЕВНОЙ бюджет энергии (0.9 * bat_mwh), а не годовой.
-        # Поэтому нужна ёмкость под самый тяжёлый день.
+        # engine: the battery has a DAILY energy budget (0.9 * bat_mwh), not annual.
+        # So size it for the hardest day.
         gap = np.clip(bat_mw - R, 0.0, None)
         days = min(365, len(gap) // 24)
         daily_gap = gap[: days * 24].reshape(days, 24).sum(axis=1) if days else gap.sum()
@@ -184,8 +184,8 @@ def build_portfolio(curves: dict, params: np.ndarray | dict,
             0.6 + 1.4 * max(0.0, -par["battery_w"]))
         mon_on = max(0.0, HORIZON - float(T_on[i]))
         v_bat = -1e9
-        # Батарея имеет смысл ТОЛЬКО если она реально закрывает стресс-часы,
-        # которых не хватает для 99.99%. Иначе это flex с лишним capex — не берём.
+        # A battery only makes sense if it actually covers the stress hours that would
+        # otherwise break 99.99%. Otherwise it is flex with extra capex — not taken.
         if bat_mw >= min_mw and deficit_mwh > 0.5:
             v_bat = REV_PER_MW_MONTH * 1.25 * bat_mw * mon_on
             v_bat *= 1.0 + par["speed_w"] * (mon_on / HORIZON)
@@ -199,21 +199,21 @@ def build_portfolio(curves: dict, params: np.ndarray | dict,
         if mode == "skip" or mw < min_mw:
             continue
         if mode == "battery" and bmwh <= 0.5:
-            mode, bmwh = "flex", 0.0   # батарея ничего не закрывает -> обычный flex
+            mode, bmwh = "flex", 0.0   # battery covers nothing -> plain flex
 
         portfolio[i] = {"site_id": curves["ids"][i], "mode": mode, "mw": float(np.floor(mw * 100.0) / 100.0),
                         "sla": float(sla), "battery_mwh": round(float(bmwh), 2)}
         alloc_total[s] += portfolio[i]["mw"]
         if mode == "firm":
             remaining[s] = np.maximum(0.0, R - portfolio[i]["mw"])
-        else:  # flex/battery: в стресс-часы забирают всё, что есть
+        else:  # flex/battery: take everything available in stress hours
             remaining[s] = np.where(R < portfolio[i]["mw"], 0.0, R - portfolio[i]["mw"])
 
     return repair_portfolio(curves, portfolio)
 
 
 def _cover_daily(deficit: np.ndarray, daily_budget: float) -> np.ndarray:
-    """Локальная копия логики движка: дневной бюджет батареи, худшие часы первыми."""
+    """Local copy of the engine logic: daily battery budget, deepest hours first."""
     if daily_budget <= 0:
         return np.zeros_like(deficit)
     n_days = deficit.size // 24
@@ -231,7 +231,7 @@ def _cover_daily(deficit: np.ndarray, daily_budget: float) -> np.ndarray:
 
 
 def _avail_given(curves, sub_rows, k, mw, cap_left, bat_mwh) -> tuple[float, np.ndarray]:
-    """Доступность сайта при заданном MW (mimics engine allocation order)."""
+    """Site availability for a given MW (mimics the engine allocation order)."""
     s = sub_rows[k]
     load = np.minimum(mw, np.maximum(0.0, cap_left[s]))
     deficit = np.clip(mw - load, 0.0, None)
@@ -242,11 +242,11 @@ def _avail_given(curves, sub_rows, k, mw, cap_left, bat_mwh) -> tuple[float, np.
 
 
 def repair_portfolio(curves: dict, portfolio: list[dict], verbose: bool = False) -> list[dict]:
-    """Проверяет собственный план и ужимает MW, пока SLA каждого сайта не соблюдён.
+    """Checks its own plan and shrinks MW until every site SLA holds.
 
-    Это обязательный шаг: подстанция общая, и два flex-сайта на ней конкурируют за
-    headroom в стресс-часы. Без repair план оптимистичен и часть MW не продаётся.
-    Порядок — как в движке (по месяцу подключения), чтобы прогноз совпадал с проверкой.
+    Mandatory step: the substation is shared, so two flex sites compete for headroom
+    in stress hours. Without repair the plan is optimistic and part of MW is unsellable.
+    Order matches the engine (by energize month) so forecast == verification.
     """
     ids = list(curves["ids"])
     sub_rows = np.asarray(curves["sub_idx"])
@@ -266,13 +266,13 @@ def repair_portfolio(curves: dict, portfolio: list[dict], verbose: bool = False)
     for k, item in enumerate(portfolio):
         if item["mode"] == "firm":
             firm_total[sub_rows[k]] += item["mw"]
-    # firm не должен превышать минимум headroom подстанции
+    # firm must not exceed the substation minimum headroom
     for s in range(S):
         rows = np.flatnonzero(sub_rows == s)
         if rows.size:
             hmin = float(H_sub[s].min())
             if firm_total[s] > hmin:
-                # ужимаем firm-сайты на этой подстанции пропорционально
+                # shrink firm sites on this substation proportionally
                 scale = max(0.0, hmin - 0.02) / max(firm_total[s], 1e-9)
                 for k, item in enumerate(portfolio):
                     if item["mode"] == "firm" and sub_rows[k] == s:

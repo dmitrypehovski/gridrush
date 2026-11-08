@@ -1,16 +1,16 @@
-"""DEV-ONLY: мок кривых и упрощённый evaluator, чтобы валидировать луп до готовности sim/.
-После интеграции loop/run.py использует sim.curves.site_curves + sim.engine.evaluate.
-Эти числа НЕ идут в демо.
+"""DEV-ONLY: mock curves and a simplified evaluator to validate the loop before sim/ is ready.
+After integration, loop/run.py uses sim.curves.site_curves + sim.engine.evaluate.
+These numbers are NOT used in the demo.
 """
 from __future__ import annotations
 
 import numpy as np
 
 HORIZON = 36
-REV = 0.10           # $M / MW·месяц (базовая цена, SLA даёт множитель)
+REV = 0.10           # $M / MW-month (base price; SLA applies a multiplier)
 BAT_MW = 0.35
 BAT_MWH = 0.25
-SLA_PENALTY = 5.0    # × revenue за MW·ч сверх бюджета
+SLA_PENALTY = 5.0    # revenue multiple per MW-hour beyond the budget
 SLA_BUDGET = {0.9999: 0.876, 0.999: 8.76, 0.99: 87.6}
 SLA_MULT = {0.9999: 1.25, 0.999: 1.0, 0.99: 0.80}
 
@@ -62,7 +62,7 @@ def make_mock(seed: int = 7, n_sub: int = 8, per_sub: int = 5) -> dict:
 
 
 def mock_evaluate(curves: dict, portfolio: list[dict]) -> dict:
-    """Упрощённый verifier: считает, что реально достанется сети и сколько потеряно."""
+    """Simplified verifier: what the grid actually receives and what is lost."""
     Hm = np.asarray(curves["H"])
     n = len(curves["ids"])
     idx = {sid: i for i, sid in enumerate(curves["ids"])}

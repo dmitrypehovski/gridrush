@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Generate web/sample_run.json for the GRIDRUSH dashboard (offline dev data).
 
-Цель: пока sim/ и loop/ ещё пустые, у дашборда должны быть правдоподобные данные
-строго по схеме CONTRACT.md §5. Реальные формы берём из data/us_grid_hourly_2025.csv
-(EIA-930, CISO/CAISO, 2025), геометрия сайтов и таймлайны интерконнекта — синтетика,
-как и в контракте. Никаких внешних сетей/библиотек, только stdlib.
+Purpose: while sim/ and loop/ are still empty, the dashboard needs plausible data
+strictly per the CONTRACT.md §5 schema. Real shapes come from data/us_grid_hourly_2025.csv
+(EIA-930, CISO/CAISO, 2025); site geometry and interconnection timelines are synthetic,
+as in the contract. No external networks or libraries, stdlib only.
 
-Запуск:
+Usage:
     python3 web/make_sample.py [--region CAL] [--out web/sample_run.json]
 """
 from __future__ import annotations
@@ -32,9 +32,9 @@ REGION_CODES = {
     "MISO": "MISO",
 }
 
-# --- синтетические подстанции -------------------------------------------------
+# --- synthetic substations -------------------------------------------------
 # (id, cap_mw, headroom_fraction_at_peak, lf derived) — headroom_fraction < 0
-# означает, что подстанция уже перегружена в пиковый час: только skip.
+# means the substation is already overloaded at the peak hour: skip only.
 SUBSTATIONS = [
     ("S01", 42.0, 0.120),
     ("S02", 55.0, 0.030),
@@ -46,8 +46,8 @@ SUBSTATIONS = [
     ("S08", 20.0, 0.060),
 ]
 
-# Планы агента по подстанциям: режимы и во сколько раз запрошенная мощность
-# превышает свободный headroom в пиковый час (>1 => гибкие сайты куртейлятся).
+# Agent plans per substation: modes, and how many times the requested MW
+# exceeds free headroom at the peak hour (>1 => flexible sites curtail).
 PLANS = {
     "S01": {"modes": ["flex", "flex", "battery"], "factor": 1.06},
     "S02": {"modes": ["flex"], "factor": 1.04},
@@ -95,11 +95,11 @@ def round2(x):
 
 
 def make_sites(rng: random.Random):
-    """40 сайтов: 8 подстанций x 5. Геометрия синтетическая, но параметризована."""
+    """40 sites: 8 substations x 5. Geometry is synthetic but parameterized."""
     sites = []
     for sid, cap, frac in SUBSTATIONS:
-        # lf выводим из желаемого headroom в пиковый час: Hmax = 0.98*cap - lf*cap*u_peak
-        u_peak = 43860.0 / 33796.0  # CISO peak / p95 — общий для региональной формы
+        # derive lf from the desired peak-hour headroom: Hmax = 0.98*cap - lf*cap*u_peak
+        u_peak = 43860.0 / 33796.0  # CISO peak / p95 — shared by the regional shape
         lf = max(0.55, min(0.98, (0.98 - frac) / u_peak))
         hmax = max(0.0, (0.98 - lf * u_peak) * cap)
         cx, cy = CENTER[sid]
@@ -118,7 +118,7 @@ def make_sites(rng: random.Random):
                     "Hmax_mw": round2(hmax),
                     "x": round(cx + rng.uniform(-0.055, 0.055), 4),
                     "y": round(cy + rng.uniform(-0.045, 0.045), 4),
-                    # будет пересчитано по часовой симуляции ниже
+                    # recomputed by the hourly simulation below
                     "stress_hours": 0,
                 }
             )
@@ -126,8 +126,8 @@ def make_sites(rng: random.Random):
 
 
 def pick_portfolio(sites, rng: random.Random):
-    """Портфель «лучшей политики»: по подстанциям выбираем самые крупные сайты,
-    суммарную мощность ограничиваем Hmax * factor (гибкие куртейлятся в пик)."""
+    """Portfolio of the "best policy": per substation take the largest sites,
+    total MW limited to Hmax * factor (flexible sites curtail at the peak)."""
     by_sub = {}
     for s in sites:
         by_sub.setdefault(s["substation"], []).append(s)
@@ -141,7 +141,7 @@ def pick_portfolio(sites, rng: random.Random):
         hmax = cand[0]["Hmax_mw"]
         if hmax <= 0.05:
             continue
-        # суммарный запрос по подстанции: headroom * factor, но не больше max_mw
+        # total request per substation: headroom * factor, capped by max_mw
         budget = min(hmax * plan["factor"], sum(s["max_mw"] for s in cand))
         modes = plan["modes"]
         total_max = sum(cand[i]["max_mw"] for i in range(len(modes)))
@@ -160,10 +160,10 @@ def pick_portfolio(sites, rng: random.Random):
             if mode == "battery":
                 item["battery_mwh"] = round(mw * rng.uniform(3.5, 6.5), 1)
             if mode == "firm":
-                # firm не куртейлится: он должен влезать в минимальный headroom
+                # firm is never curtailed: it must fit the minimum headroom
                 item["mw"] = max(0.5, min(item["mw"], s["Hmax_mw"]))
             portfolio.append(item)
-    # страховка: firm-нагрузка не должна превышать Hmax подстанции
+    # safety: firm load must not exceed the substation Hmax
     firm_by_sub = {}
     for p in portfolio:
         if p["mode"] == "firm":
@@ -179,8 +179,8 @@ def pick_portfolio(sites, rng: random.Random):
 
 
 def simulate(sites, portfolio, u_hours):
-    """Почасовая симуляция representative-года (8760ч): куртейлмент, availability,
-    stress day. Возвращает per-site статистику и массивы для stress day."""
+    """Hourly simulation of the representative year (8760 h): curtailment, availability,
+    stress day. Returns per-site stats and arrays for the stress day."""
     site_by_id = {s["id"]: s for s in sites}
     by_sub = {}
     for p in portfolio:
@@ -191,10 +191,10 @@ def simulate(sites, portfolio, u_hours):
     curt_mwh = {p["site_id"]: 0.0 for p in portfolio}
     bat_energy = {p["site_id"]: p.get("battery_mwh", 0.0) for p in portfolio}
 
-    # максимум headroom для stress_hours: считаем часы, когда подстанция в напряжении
+    # max headroom for stress_hours: count hours when the substation is stressed
     sub_stress_hours = {}
     violation_mwh = 0.0
-    curt_by_hour = [0.0] * 8760  # для stress day / диагностики
+    curt_by_hour = [0.0] * 8760  # for the stress day / diagnostics
 
     for h, u in enumerate(u_hours):
         for sid, items in by_sub.items():
@@ -207,7 +207,7 @@ def simulate(sites, portfolio, u_hours):
             deficit = requested - avail
             if deficit <= 1e-9:
                 continue
-            # battery покрывает дефицит до годового бюджета, потом flex куртейлится
+            # battery covers the deficit up to its annual budget, then flex curtails
             bats = [p for p in items if p["mode"] == "battery"]
             for p in bats:
                 if deficit <= 1e-9:
@@ -217,7 +217,7 @@ def simulate(sites, portfolio, u_hours):
                     take = max(0.0, take)
                     bat_energy[p["site_id"]] -= take
                     deficit -= take
-            # оставшийся дефицит режем по гибким сайтам пропорционально
+            # remaining deficit is shed by flexible sites proportionally
             flex = [p for p in items if p["mode"] in ("flex", "battery")]
             flex_total = sum(p["mw"] for p in flex)
             if deficit > 1e-9 and flex_total > 0:
@@ -227,12 +227,12 @@ def simulate(sites, portfolio, u_hours):
                         curt_hours[p["site_id"]] += 1
                         curt_mwh[p["site_id"]] += cut
                     deficit -= cut
-            # firm-нагрузка не куртейлится; дефицит (если есть) = violation
+            # firm load is never curtailed; any deficit is a violation
             if deficit > 1e-6:
                 violation_mwh += deficit
             curt_by_hour[h] += max(0.0, requested - avail) if deficit < 0 else 0.0
 
-    # stress day: 2025-08-22, локальные часы
+    # stress day: 2025-08-22, local hours
     stress = None
     return {
         "curt_hours": curt_hours,
@@ -262,7 +262,7 @@ def main():
     portfolio = pick_portfolio(sites, rng)
     sim = simulate(sites, portfolio, u)
 
-    # --- метрики портфеля -----------------------------------------------------
+    # --- portfolio metrics -----------------------------------------------------
     site_by_id = {s["id"]: s for s in sites}
     best_sites = []
     delivered = 0.0
@@ -275,7 +275,7 @@ def main():
         s = site_by_id[p["site_id"]]
         curt_h = sim["curt_hours"][p["site_id"]]
         avail = 1.0 - curt_h / 8760.0
-        # SLA: если сайт гибкий и куртейлится больше 8.76 ч/год — 99.0%
+        # SLA: a flexible site curtailing more than 8.76 h/yr drops to 99.0%
         sla = 0.999 if curt_h <= 8.76 else 0.99
         budget_h = (1.0 - sla) * 8760.0
         breach_h = max(0.0, curt_h - budget_h)
@@ -284,7 +284,7 @@ def main():
         if p["mode"] == "battery":
             capex += 0.35 * p["mw"] + 0.25 * p.get("battery_mwh", 0.0)
         if p["mode"] == "firm":
-            capex += 0.05 * p["mw"]  # синтетика: инженерные изыскания, чтобы firm не был "бесплатным" читом
+            capex += 0.05 * p["mw"]  # synthetic: engineering studies so firm is not a "free" cheat
         t = p["energize_month"]
         delivered += p["mw"] * max(0, 36 - t) * avail
         if t <= 12:
@@ -304,7 +304,7 @@ def main():
                 "curtail_mwh": round2(sim["curt_mwh"][p["site_id"]]),
             }
         )
-    # monthly_mw: суммарная мощность, работающая в каждом месяце (36)
+    # monthly_mw: total MW running in each month (36)
     monthly_by_mode = {"firm": [0.0] * 36, "flex": [0.0] * 36, "battery": [0.0] * 36}
     for p in portfolio:
         for m in range(36):
@@ -315,7 +315,7 @@ def main():
         for m in range(36)
     ]
     delivered = sum(p["mw"] for p in portfolio) * 0  # placeholder, replaced below
-    # delivered с учётом avail по контракту
+    # delivered, weighted by contractual availability
     delivered = sum(
         b["mw"] * max(0, 36 - b["energize_month"]) * b["avail"] for b in best_sites
     )
@@ -329,7 +329,7 @@ def main():
                 continue
             chosen.append(s)
         chosen.sort(key=mode_pick)
-        # all-firm: берём по подстанции до min(Hmax, sum max_mw)
+        # all-firm: per substation up to min(Hmax, sum max_mw)
         per_sub = {}
         for s in chosen:
             per_sub.setdefault(s["substation"], []).append(s)
@@ -378,7 +378,7 @@ def main():
     ratio_mwmonths = delivered / max(1e-9, best_baseline["delivered_mwmonths"])
     ratio_mw12 = mw12 / max(0.5, best_baseline["mw_at_month12"])
 
-    # --- iterations: как учился агент ----------------------------------------
+    # --- iterations: how the agent learned -------------------------------------
     n_iter = 160
     iterations = []
     best_score = -999.0
@@ -390,7 +390,7 @@ def main():
         noise = rng2.gauss(0, 3.2) * (1.0 - 0.5 * progress)
         score = target + noise
         if i == 0:
-            score = target * 0.55 - 6.0  # стартовая политика: нарушения + плохой портфель
+            score = target * 0.55 - 6.0  # starting policy: violations + a poor portfolio
         is_best = score > best_score + 1e-9
         best_score = max(best_score, score)
         delivered_i = delivered * (0.45 + 0.55 * progress) + rng2.gauss(0, 4)
@@ -406,7 +406,7 @@ def main():
         )
         if first_score is None:
             first_score = score
-    # последняя точка = финальная политика
+    # last point = the final policy
     iterations[-1]["score"] = round(net_value, 3)
     iterations[-1]["delivered_mwmonths"] = round(delivered, 2)
     iterations[-1]["best"] = True
@@ -443,11 +443,11 @@ def main():
         "curtailment_mw": curtail_day,
     }
 
-    # stress_hours для top-level sites (сколько часов подстанция в напряжении)
+    # stress_hours for top-level sites (hours the substation is stressed)
     for s in sites:
         s["stress_hours"] = sim["sub_stress_hours"].get(s["substation"], 0)
 
-    # --- регионы для шапки ----------------------------------------------------
+    # --- regions for the header -------------------------------------------------
     regions = []
     with SUMMARY_CSV.open(newline="") as f:
         for row in csv.DictReader(f):

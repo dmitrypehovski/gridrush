@@ -426,8 +426,8 @@
 
   /* =====================================================================
      GRIDRUSH dashboard — self-contained, offline, no dependencies.
-     Данные приходят только через window.RUN_DATA (build.py вставляет JSON).
-     Все рендеры обёрнуты в safe(), чтобы неполные данные не давали белый экран.
+     Data arrives only through window.RUN_DATA (build.py injects the JSON).
+     All renderers are wrapped in safe() so incomplete data never yields a white screen.
      ===================================================================== */
 
   var D = (window.RUN_DATA && typeof window.RUN_DATA === "object" && !Array.isArray(window.RUN_DATA))
@@ -1840,7 +1840,7 @@
           ? s + (subSum !== undefined ? " \u00b7 " + fmtInt(subSum) + "MW" : "")
           : s + (b.cap !== null ? " \u00b7 " + Math.round(b.cap) + "MW" : "");
         if (compact) {
-          /* на низком разрешении подпись рисуем поверх точек, на подложке */
+          /* at low resolution draw the label above the dots, on a backing plate */
           deferredLabels.push({ x: cx, y: Math.max(plot.y + 15, b.minY - 6), tx: cx, ty: b.minY, text: label });
         } else {
           svg.appendChild(svgEl("line", { x1: cx - 3, y1: cy, x2: cx + 3, y2: cy, "class": "map-grid", stroke: "#33465f" }));
@@ -2374,7 +2374,7 @@
       document.body.setAttribute("data-diag", JSON.stringify(diag));
       document.body.setAttribute("data-render", "ok");
       window.__GRIDRUSH_DIAG = diag;
-    } catch (e) { /* диагностика не должна ломать демо */ }
+    } catch (e) { /* diagnostics must never break the demo */ }
   }
 
   /* =====================================================================
@@ -2403,12 +2403,12 @@
     var pending = 0;
     initBarsControls();
     initMapControls();
-    /* По загрузке страница показывает ГОТОВОЕ состояние (полная кривая, LLM-точки,
-       финальные счётчики). Анимация запускается только кнопкой Replay loop. */
+    /* On page load the page shows the FINISHED state (full curve, LLM points,
+       final counters). The animation starts only via the Replay loop button. */
     renderAll(false);
     firstRender = false;
-    /* запоминаем стартовые размеры: первый вызов ResizeObserver не должен
-       перерисовывать и обрывать вступительную анимацию */
+    /* remember the initial sizes: the first ResizeObserver call must not
+       redraw and cut the intro animation */
     ["chart-learn", "chart-bars", "chart-map", "chart-stress"].forEach(function (id) {
       var cel = document.getElementById(id);
       if (!cel) return;
@@ -2421,7 +2421,7 @@
       safe("replay", function () { drawLearn(true); });
     });
 
-    /* resize: перерисовываем без повторной анимации, только если размер реально изменился */
+    /* resize: redraw without re-animating, only if the size actually changed */
     function onResize() {
       clearTimeout(pending);
       pending = setTimeout(function () {
@@ -2447,7 +2447,7 @@
           var el = document.getElementById(id);
           if (el) ro.observe(el);
         });
-      } catch (e) { /* без ResizeObserver тоже работает */ }
+      } catch (e) { /* works without ResizeObserver too */ }
     }
     window.addEventListener("resize", onResize);
 

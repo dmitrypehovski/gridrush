@@ -1,104 +1,104 @@
-# GRIDRUSH — контракт (фриз №1, 2026-11-08)
+# GRIDRUSH — contract (freeze #1, 2026-11-08)
 
-> **GRIDRUSH** — speed-to-power agent. Агент решает, какие вычислительные нагрузки и с какой
-> firm/гибкой мощностью подключить, чтобы получить максимум MW·месяцев compute за 36 месяцев при
-> нулевых нарушениях сетевых лимитов и соблюдении SLA по доступности.
+> **GRIDRUSH** — a speed-to-power agent. The agent decides which compute loads to connect and with what
+> firm/flexible capacity, in order to get the maximum MW·months of compute over 36 months with
+> zero grid-limit violations and with the availability SLA met.
 
-Хакатон: SF x MIT Hack Day: Energy (AGI House SF, 08.11.2026). Сабмит 17:00 PT, демо 18:30 PT.
-Тема: grid-friendly compute. Треки: 1 (sites), 2 (grid capacity), 3 (load management).
-Владелец контракта: Lead. Менять только через Lead.
+Hackathon: SF x MIT Hack Day: Energy (AGI House SF, 2026-11-08). Submission 17:00 PT, demo 18:30 PT.
+Theme: grid-friendly compute. Tracks: 1 (sites), 2 (grid capacity), 3 (load management).
+Contract owner: Lead. Change only through the Lead.
 
 ---
 
-## 1. Что именно симулируем (и что честно помечаем как синтетику)
+## 1. What exactly we simulate (and what we honestly label as synthetic)
 
-**Реальное:** почасовая нагрузка, прогноз, генерация по топливу за 2025 для 12 US BA
-(`data/us_grid_hourly_2025.csv`, EIA-930, public domain). Из него берём форму годовой нагрузки и
-солнечной генерации для региона (CAISO / ERCOT / PJM / MISO).
+**Real:** hourly load, forecast and generation by fuel for 2025 for 12 US BA
+(`data/us_grid_hourly_2025.csv`, EIA-930, public domain). From it we take the annual load shape and the
+solar generation shape for a region (CAISO / ERCOT / PJM / MISO).
 
-**Синтетическое, но параметризованное по фактам из репо и спича (обязательно в таблицу допущений):**
+**Synthetic, but parameterised from facts in the repo and the speech (mandatory in the assumptions table):**
 
-| Параметр | Значение | Откуда |
+| Parameter | Value | Where from |
 |---|---|---|
-| Сеть | 8 подстанций × 5 кандидатных сайтов = 40 сайтов, 0.5–10 MW | сценарий хакатона (0.5–10 MW) |
-| Ёмкость подстанции `cap_mw` | 8–60 MW | синтетика |
-| Существующая нагрузка подстанции | `e[h] = lf * cap * u[h]`, `lf ∈ [0.6, 1.0]`, `u[h]=d[h]/p95(d)` | «многие районы распределения уже полностью загружены» (Архам, спич) |
-| Ожидание firm-подключения | 18–36 мес (по позиции в очереди) | MISO: заявки ищут подключение за 18–36 мес |
-| Ожидание flex / step-up (non-firm) | 5–10 мес | MISO Firm Service Step Up, ERCOT batch studies |
-| Onsite battery | 4–7 мес | синтетика |
-| Стоимость возможности подключения | firm: $0; flex: $0 + куртейлмент; battery: $0.35M/MW + $0.25M/MWh | синтетика, порядок величин по рынку |
-| Маржинальность compute | $0.10M за MW·месяц ($1.2M/MW·год) | «$5M за MW на 3–4 года» (Архам, спич) |
-| SLA | **выбор агента с ценой**: 99.99% = 0.876 ч/год (премия ×1.25), 99.9% = 8.76 ч/год (×1.0), 99.0% = 87.6 ч/год (×0.80) | вопрос зала про 98% и PG&E + «за 6 nines платят премию», спич |
-| Сеть-калибровка | реальный 20 кВ MV-фидер: measured headroom 2.9–5.1 МВт/шину (pandapower mv_oberrhein) | AC power-flow спайк (sim/POWERFLOW.md) |
-| Штраф SLA | 5× маржинальность за MW·ч куртейлмента сверх бюджета | синтетика |
+| Grid | 8 substations × 5 candidate sites = 40 sites, 0.5–10 MW | hackathon scenario (0.5–10 MW) |
+| Substation capacity `cap_mw` | 8–60 MW | synthetic |
+| Existing substation load | `e[h] = lf * cap * u[h]`, `lf ∈ [0.6, 1.0]`, `u[h]=d[h]/p95(d)` | "many distribution areas are already fully loaded" (Arham, speech) |
+| Firm interconnection wait | 18–36 months (by queue position) | MISO: requests seek connection in 18 to 36 months |
+| Flex / step-up (non-firm) wait | 5–10 months | MISO Firm Service Step Up, ERCOT batch studies |
+| Onsite battery | 4–7 months | synthetic |
+| Cost of the interconnection option | firm: $0; flex: $0 + curtailment; battery: $0.35M/MW + $0.25M/MWh | synthetic, order of magnitude from the market |
+| Compute margin | $0.10M per MW·month ($1.2M/MW·yr) | "$5M per MW over 3–4 years" (Arham, speech) |
+| SLA | **the agent's choice, with a price**: 99.99% = 0.876 h/yr (revenue multiplier ×1.25), 99.9% = 8.76 h/yr (×1.0), 99.0% = 87.6 h/yr (×0.80) | the audience question about 98% and PG&E + "you get a premium for six nines", speech |
+| Grid calibration | a real 20 kV MV feeder: measured headroom 2.9–5.1 MW/bus (pandapower mv_oberrhein) | AC power-flow spike (sim/POWERFLOW.md) |
+| SLA penalty | 5× the margin per MW·h of curtailment over the budget | synthetic |
 
-**Никаких внешних API.** Всё локально, демо должно работать без сети.
+**No external APIs.** Everything is local; the demo must run without a network.
 
-## 2. Модель (детерминированная, numpy, быстрая)
+## 2. Model (deterministic, numpy, fast)
 
-Часы: `h = 0..8759` (год 2025 воспроизводится в каждом из 36 месяцев горизонта: месяц `m`
-использует часы `hours_of_month(m)` того же representative-года).
+Hours: `h = 0..8759` (the year 2025 is replayed in each of the 36 months of the horizon: month `m`
+uses the hours `hours_of_month(m)` of the same representative year).
 
-Для региона `R`: `u[h] = demand_mw[h] / percentile(demand_mw, 95)`.
+For region `R`: `u[h] = demand_mw[h] / percentile(demand_mw, 95)`.
 
-Подстанция `S`: `cap_mw[S]`, `lf[S]`.
-Сайт `i` на подстанции `S(i)`: `max_mw[i] ∈ [0.5, 10]`.
+Substation `S`: `cap_mw[S]`, `lf[S]`.
+Site `i` at substation `S(i)`: `max_mw[i] ∈ [0.5, 10]`.
 
 ```
-e[S,h]    = lf[S] * cap_mw[S] * u[h]        # существующая нагрузка подстанции
-H[i,h]    = cap_mw[S(i)] - e[S(i),h] - 0.02*cap_mw[S(i)]   # свободный headroom сайта i
+e[S,h]    = lf[S] * cap_mw[S] * u[h]        # existing load of the substation
+H[i,h]    = cap_mw[S(i)] - e[S(i),h] - 0.02*cap_mw[S(i)]   # free headroom of site i
 Hmax[i]   = max_h H[i,h]
-T_firm[i], T_flex[i], T_on[i]              # месяцы до energize (у каждого сайта свои)
+T_firm[i], T_flex[i], T_on[i]              # months to energize (own for each site)
 ```
 
-**Режимы сайта (решение агента):**
-- `skip` — не подключаем.
-- `firm`: `mw_firm[i] = min(0.5..min(Hmax[i], max_mw[i]), floor_alloc)`; energize в `T_firm`.
-  Ограничение: `Σ_{i∈S, mode=firm} mw_firm[i] <= min_h H[i,h]` — общий лимит подстанции.
-- `flex`: `mw[i] ∈ [0.5, min(Hmax[i], max_mw[i])]`, energize в `T_flex`; SLA сайта задаёт допустимое число
-  куртейлмент-часов в год (0.876 / 8.76 / 87.6) и множитель выручки (1.25 / 1.0 / 0.8); в часе `h` сайт обязан
-  снизить нагрузку до `max(0, H[i,h] - занято_другими)`; куртейлмент разрешён только в часы, где
-  `e[S,h] + Σ_mw > cap_mw[S] - margin`. Число куртейлмент-часов за год `k(i)`.
-- `flex+battery`: то же + батарея `B_mwh[i]`, `P_bat >= mw[i]`; в куртейлмент-часы батарея
-  закрывает дефицит до исчерпания `B_mwh[i]` (пер-год), остаток — куртейлмент.
-- `onsite` (опционально, если успеем): flex+battery+газ, газ в стресс-часы по $/MWh.
+**Site modes (the agent's decision):**
+- `skip` — do not connect.
+- `firm`: `mw_firm[i] = min(0.5..min(Hmax[i], max_mw[i]), floor_alloc)`; energize at `T_firm`.
+  Constraint: `Σ_{i∈S, mode=firm} mw_firm[i] <= min_h H[i,h]` — the substation-wide limit.
+- `flex`: `mw[i] ∈ [0.5, min(Hmax[i], max_mw[i])]`, energize at `T_flex`; the site's SLA sets the allowed number of
+  curtailment hours per year (0.876 / 8.76 / 87.6) and the revenue multiplier (1.25 / 1.0 / 0.8); in hour `h` the site must
+  reduce load to `max(0, H[i,h] - occupied_by_others)`; curtailment is allowed only in hours where
+  `e[S,h] + Σ_mw > cap_mw[S] - margin`. Number of curtailment hours per year `k(i)`.
+- `flex+battery`: the same + a battery `B_mwh[i]`, `P_bat >= mw[i]`; in curtailment hours the battery
+  covers the deficit until `B_mwh[i]` is exhausted (per year), the remainder is curtailment.
+- `onsite` (optional, if we have time): flex+battery+gas, gas in stress hours at $/MWh.
 
-**Проверка (verifier), независимая от политики:** для каждого часа и подстанции
-`violation_mwh += max(0, e[S,h] + Σ_i load_i[h] - cap_mw[S] + margin)`, где `load_i[h]` учитывает
-firm/flex/battery. Должно быть 0.
+**Verification (verifier), independent of the policy:** for every hour and substation
+`violation_mwh += max(0, e[S,h] + Σ_i load_i[h] - cap_mw[S] + margin)`, where `load_i[h]` accounts for
+firm/flex/battery. Must be 0.
 
-**Доступность:** `avail[i] = 1 - curtailed_hours[i]/8760`; требование `avail[i] >= sla[i]`,
-`sla[i] ∈ {0.999, 0.99}`. Нарушение — штраф (см. §1).
+**Availability:** `avail[i] = 1 - curtailed_hours[i]/8760`; requirement `avail[i] >= sla[i]`,
+`sla[i] ∈ {0.999, 0.99}`. A violation incurs a penalty (see §1).
 
-**Метрики (в этом порядке важности):**
-1. `ratio_delivered = delivered_mwmonths / baseline_mwmonths` — основной headline
+**Metrics (in this order of importance):**
+1. `ratio_delivered = delivered_mwmonths / baseline_mwmonths` — the main headline
 2. `delivered_mwmonths` = Σ_i mw[i] * max(0, 36 - T[i]) * avail[i]
-3. `mw_at_month12` — сколько MW реально работает к 12-му месяцу (второй headline)
-   + `compliant_mwmonths` — только продаваемый compute (SLA соблюдён)
-4. `net_value_musd` = 0.10 * rev_weighted_mwmonths − capex − sla_penalty, где
+3. `mw_at_month12` — how much MW is actually running by month 12 (second headline)
+   + `compliant_mwmonths` — sellable compute only (SLA met)
+4. `net_value_musd` = 0.10 * rev_weighted_mwmonths − capex − sla_penalty, where
    `rev_weighted = Σ mw·months·avail·mult(sla)`
-5. `violations_mwh` = 0 (жёстко)
-6. `iterations` — лог лучшего score по итерациям (для графика «агент учится»)
+5. `violations_mwh` = 0 (hard)
+6. `iterations` — log of the best score per iteration (for the "the agent learns" chart)
 
-**score для лупа:** `score = net_value_musd - 10 * violations_mwh - 5 * sla_penalty_musd`
+**score for the loop:** `score = net_value_musd - 10 * violations_mwh - 5 * sla_penalty_musd`
 
-## 3. Владение файлами (не пересекаться!)
+## 3. File ownership (do not overlap!)
 
-| Путь | Владелец | Что |
+| Path | Owner | What |
 |---|---|---|
-| `gridrush/data/` | Lead | CSV + `sites.json` (генерирует sim по seed) |
-| `gridrush/sim/**` | **sim-engineer** | движок, evaluator, baseline, тесты, `results/sim_baseline.json` |
-| `gridrush/loop/**` | **Lead** | поиск/эволюция, CLI, `results/loop.json` |
+| `gridrush/data/` | Lead | CSV + `sites.json` (sim generates it by seed) |
+| `gridrush/sim/**` | **sim-engineer** | engine, evaluator, baselines, tests, `results/sim_baseline.json` |
+| `gridrush/loop/**` | **Lead** | search/evolution, CLI, `results/loop.json` |
 | `gridrush/web/**` | **dashboard-builder** | `dashboard.html` (single-file, offline) + `web/build.py` |
 | `gridrush/pitch/**` | **pitch-writer** | pitch.md, demo-script.md, submission.md, qa-defense.md |
-| `gridrush/rsi_agent/**` | **Lead** (через subagent) | LLM-in-the-loop политики + `rsi_log.json` |
+| `gridrush/rsi_agent/**` | **Lead** (via subagent) | LLM-in-the-loop policies + `rsi_log.json` |
 | `gridrush/CONTRACT.md`, `README.md` | Lead | |
 
-**Правило:** не редактировать чужие файлы. Нужно изменение контракта — сообщение Lead.
+**Rule:** do not edit other people's files. Need a contract change — message the Lead.
 
-## 4. API симулятора (заморожено; sim-engineer реализует ровно это)
+## 4. Simulator API (frozen; sim-engineer implements exactly this)
 
-Файл `sim/engine.py`, Python 3.9, только `numpy`/`pandas` (без внешних установок, без сети).
+File `sim/engine.py`, Python 3.9, only `numpy`/`pandas` (no external installs, no network).
 
 ```python
 # sim/data.py
@@ -117,13 +117,13 @@ evaluate(region: str, portfolio: list[dict]) -> dict
 ```python
 # sim/baselines.py
 BASELINES = {"all_firm_greedy": fn, "queue_order": fn, "max_mw_no_flex": fn}
-# каждая: (region, sites) -> portfolio list[dict]
+# each: (region, sites) -> portfolio list[dict]
 ```
 
-Требования: `evaluate` < 100 мс на 40 сайтов; детерминированно; без print; `sim/run.py` пишет
-`results/sim_baseline.json` (см. §5) по всем 4 регионам.
+Requirements: `evaluate` < 100 ms for 40 sites; deterministic; no prints; `sim/run.py` writes
+`results/sim_baseline.json` (see §5) for all 4 regions.
 
-## 5. Формат `results/*.json` (заморожено; его читает дашборд)
+## 5. `results/*.json` format (frozen; the dashboard reads it)
 
 ```json
 {
@@ -148,23 +148,23 @@ BASELINES = {"all_firm_greedy": fn, "queue_order": fn, "max_mw_no_flex": fn}
 }
 ```
 
-**Дашборд обязан уметь:** (1) анимировать `iterations` (curve score + счётчики), (2) сложенный
-bar `monthly_mw` по режимам, (3) карту 8 подстанций × 5 сайтов с цветом режима, (4) stress-day
-chart (demand vs headroom vs curtailment), (5) KPI cards `comparison`, (6) таблицу допущений.
-Стиль: тёмный, чистый, крупные числа, без CDN/интернета, один `.html`.
+**The dashboard must be able to:** (1) animate `iterations` (score curve + counters), (2) a stacked
+bar `monthly_mw` by mode, (3) a map of 8 substations × 5 sites coloured by mode, (4) a stress-day
+chart (demand vs headroom vs curtailment), (5) KPI cards `comparison`, (6) an assumptions table.
+Style: dark, clean, large numbers, no CDN/internet, a single `.html`.
 
-## 6. Что должно быть готово к 16:40 PT (жёсткий стоп)
+## 6. What must be ready by 16:40 PT (hard stop)
 
-1. `python3 sim/run.py` → `results/sim_baseline.json` с 4 регионами и 3 baseline-политиками ✅
-2. `python3 loop/run.py` → `results/loop.json` c ≥150 итерациями и лучшей политикой ✅
-3. `web/dashboard.html` открывается локально из `results/loop.json`, всё анимируется ✅
-4. `pitch/submission.md` + `pitch/demo-script.md` (3 мин, дословно) ✅
-5. `README.md` с таблицей допущений и источниками ✅
+1. `python3 sim/run.py` → `results/sim_baseline.json` with 4 regions and 3 baseline policies ✅
+2. `python3 loop/run.py` → `results/loop.json` with ≥150 iterations and the best policy ✅
+3. `web/dashboard.html` opens locally from `results/loop.json`, everything animates ✅
+4. `pitch/submission.md` + `pitch/demo-script.md` (3 min, verbatim) ✅
+5. `README.md` with the assumptions table and sources ✅
 
-## 7. Честность (важнее красоты)
+## 7. Honesty (more important than beauty)
 
-- Никогда не называть синтетику реальными данными. Везде: «real 2025 EIA-930 shape; synthetic site
-  geometry and interconnection timelines, parameters documented».
-- Любая цифра в питче имеет источник: либо `catalog` id из репо, либо транскрипт спича, либо
+- Never call synthetic data real. Everywhere: "real 2025 EIA-930 shape; synthetic site
+  geometry and interconnection timelines, parameters documented".
+- Every number in the pitch has a source: either a `catalog` id from the repo, or the speech transcript, or
   `sim/assumptions.md`.
-- Baseline должен быть добросовестным (не strawman): 3 разных baseline, в JSON видно все.
+- The baseline must be honest (not a strawman): 3 different baselines, all visible in the JSON.

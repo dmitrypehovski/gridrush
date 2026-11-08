@@ -1,12 +1,12 @@
-"""GRIDRUSH — RSI-луп: proposer → evaluator → архив → стало лучше.
+"""GRIDRUSH — RSI loop: proposer -> evaluator -> archive -> better.
 
-Это тот самый «agentic loop», который просил ивент: «agents that do that testing and get
-better at it each run». Здесь proposer — параметрический мутатор (быстрый, 150+ итераций
-за секунды); рядом в rsi_agent/ лежит лог LLM-in-the-loop, где ту же роль играет агент,
-пишущий код политики (см. README).
+This is the agentic loop the event asked for: "agents that do that testing and get
+better at it each run". The proposer is a parametric mutator (fast, 150+ iterations
+in seconds); next to it, rsi_agent/ holds the LLM-in-the-loop log where an agent
+writing policy code plays the same role (see README).
 
-Каждая итерация: мутируем вектор параметров → строим портфель → sim.evaluate() →
-сравниваем score → оставляем лучшее. Лог сохраняется для графика «агент учится».
+Each iteration: mutate the parameter vector -> build a portfolio -> sim.evaluate() ->
+compare the score -> keep the better one. The log feeds the "the agent learns" chart.
 """
 
 from __future__ import annotations
@@ -29,9 +29,9 @@ def evaluate_params(curves, evaluate_fn, params, sub_limit_mw=None) -> dict:
 def hill_climb(curves, evaluate_fn, n_iter: int = 220, seed: int = 0,
                init=None, verbose: bool = True, on_iter=None,
                sub_limit_mw=None) -> dict:
-    """Простой (1+λ) hill-climbing с адаптивным шагом и рестартом.
+    """Simple (1+lambda) hill-climbing with an adaptive step and restarts.
 
-    Возвращает {"best_params","best","iterations","history","n_evals","wall_s"}.
+    Returns {"best_params","best","iterations","history","n_evals","wall_s"}.
     """
     rng = np.random.default_rng(seed)
     t0 = time.time()
@@ -40,8 +40,8 @@ def hill_climb(curves, evaluate_fn, n_iter: int = 220, seed: int = 0,
         return evaluate_params(curves, evaluate_fn, x, sub_limit_mw=sub_limit_mw)
 
     if init is None:
-        # агент стартует «незнающим»: случайная точка пространства политик.
-        # Кривая обучения — честная: от плохого портфеля к хорошему.
+        # the agent starts "knowing nothing": a random point in policy space.
+        # The learning curve is honest: from a bad portfolio to a good one.
         x = rng.random(D)
         cur = ev(x)
         init_name = "random"
@@ -69,7 +69,7 @@ def hill_climb(curves, evaluate_fn, n_iter: int = 220, seed: int = 0,
             step = np.maximum(step * 0.97, 0.03)
         if cur["score"] > best["score"] + 1e-9:
             best_x, best = x.copy(), cur
-        # рестарт при застое
+        # restart when stuck
         if no_improve >= 45:
             restarts[0] += 1
             x = np.clip(best_x + rng.normal(0.0, 0.12, size=D), 0.0, 1.0)

@@ -73,7 +73,7 @@ def main() -> int:
     ap.add_argument("--out", default=os.path.join(ROOT, "results", "loop_physics.json"))
     ap.add_argument("--gate", default=os.path.join(ROOT, "results", "physics_gate.json"))
     ap.add_argument("--warm-start", default=None,
-                    help="results/loop.json: начать с профильного лучшего плана, ужатого под физику")
+                    help="results/loop.json: start from the profile-model best plan, trimmed to fit physics")
     args = ap.parse_args()
 
     t0 = time.time()

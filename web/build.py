@@ -30,8 +30,8 @@ DEFAULT_JSON = ROOT / "results" / "loop.json"
 DEFAULT_TEMPLATE = HERE / "template.html"
 DEFAULT_OUT = HERE / "dashboard.html"
 
-# Ключи, которые дашборд умеет показать. Отсутствие — предупреждение, не ошибка:
-# каждый блок рендерится с плейсхолдером.
+# Keys the dashboard knows how to render. A missing one is a warning, not an error:
+# every block renders with a placeholder.
 EXPECTED = ["meta", "sites", "grid", "baselines", "iterations", "best", "comparison"]
 
 
@@ -98,7 +98,7 @@ def inject(template: str, data: dict) -> str:
     if TOKEN not in template:
         die("template is missing the /*__RUN_DATA__*/ null injection token", 3)
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    # безопасная вставка в <script>: не даём данным закрыть тег и не ломаем JS-парсер
+    # safe injection into <script>: prevent data from closing the tag or breaking the JS parser
     payload = payload.replace("</", "<\\/").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
     return template.replace(TOKEN, payload, 1)
 

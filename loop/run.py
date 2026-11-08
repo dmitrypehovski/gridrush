@@ -1,11 +1,11 @@
-"""GRIDRUSH — запуск лупа и сборка results/loop.json (формат — CONTRACT §5).
+"""GRIDRUSH — run the loop and assemble results/loop.json (format: CONTRACT §5).
 
-Использование:
-  python3 loop/run.py                      # реальный sim (регион по умолчанию CAL)
+Usage:
+  python3 loop/run.py                      # real sim (region defaults to CAL)
   python3 loop/run.py --region TEX --iters 260
-  python3 loop/run.py --mock               # dev-режим без sim/ (мок-кривые)
+  python3 loop/run.py --mock               # dev mode without sim/ (mock curves)
 
-Выход: results/loop.json — его читает web/build.py и вставляет в dashboard.html.
+Output: results/loop.json — read by web/build.py and injected into dashboard.html.
 """
 from __future__ import annotations
 
@@ -32,13 +32,13 @@ REGION_NAMES = {"CAL": "CAISO", "TEX": "ERCOT", "MIDA": "PJM", "MIDW": "MISO"}
 
 
 def load_sim():
-    """Возвращает (site_curves_fn, evaluate_fn, baselines_module) из sim/."""
+    """Returns (site_curves_fn, evaluate_fn, baselines_module) from sim/."""
     from sim.curves import site_curves          # type: ignore
     from sim.engine import evaluate             # type: ignore
     try:
         import sim.baselines as baselines       # type: ignore
-    except Exception as e:  # noqa: BLE001  (baselines ещё в работе — не блокируем луп)
-        print(f"  (sim.baselines пока нет: {e}); считаю baseline сами")
+    except Exception as e:  # noqa: BLE001  (baselines may still be in progress — do not block)
+        print(f"  (sim.baselines not available yet: {e}); computing baselines here")
         baselines = None
     return site_curves, evaluate, baselines
 
@@ -53,13 +53,13 @@ def load_mock():
         return cache[region]
 
     def evaluate(portfolio, _curves=None):
-        # мок-evaluate нуждается в curves, подставим при первом вызове
+        # mock evaluate needs curves, injected on first call
         raise RuntimeError("mock evaluate requires curves")
     return site_curves, evaluate, None
 
 
 def _site_coords(region: str = "CAL") -> dict:
-    """x/y для гео-карты: реальные координаты PG&E при GRIDRUSH_SITES=real, иначе synthetic."""
+    """x/y for the geo map: real PG&E coordinates when GRIDRUSH_SITES=real, else synthetic."""
     path = os.path.join(ROOT, "data", "sites.json")
     if os.environ.get("GRIDRUSH_SITES") == "real":
         real = os.path.join(ROOT, "data", f"sites_{region}_real.json")
@@ -75,7 +75,7 @@ def _site_coords(region: str = "CAL") -> dict:
 
 
 def _site_subnames(region: str = "CAL") -> dict:
-    """id → реальное имя подстанции (PG&E) при GRIDRUSH_SITES=real."""
+    """id -> real substation name (PG&E) when GRIDRUSH_SITES=real."""
     if os.environ.get("GRIDRUSH_SITES") != "real":
         return {}
     path = os.path.join(ROOT, "data", f"sites_{region}_real.json")
@@ -109,7 +109,7 @@ def site_records(curves: dict) -> list[dict]:
 
 
 def best_site_rows(curves: dict, best: dict, portfolio: list[dict], sites_by_id: dict) -> list[dict]:
-    """Одна строка на подключённый сайт. Источник — per-site словари движка."""
+    """One row per energized site. Source: the engine per-site dicts."""
     avail_by = best.get("avail_by_site") or {}
     sla_by = best.get("sla_by_site") or {}
     curtail_by = best.get("curtail_hours_by_site") or {}
@@ -137,7 +137,7 @@ def best_site_rows(curves: dict, best: dict, portfolio: list[dict], sites_by_id:
 
 
 def monthly_by_mode(curves: dict, best: dict, portfolio: list[dict]) -> dict:
-    """(36,) MW по месяцам, разложенные по режимам — для stacked bar в дашборде."""
+    """(36,) MW by month, split by mode — for the dashboard stacked bar."""
     avail_map = {}
     if isinstance(best.get("avail_by_site"), dict):
         avail_map = {k: float(v) for k, v in best["avail_by_site"].items()}
@@ -159,10 +159,10 @@ def monthly_by_mode(curves: dict, best: dict, portfolio: list[dict]) -> dict:
 
 
 def compliant_mwmonths(res: dict) -> float:
-    """MW·месяцы, которые реально можно продать по контракту: SLA сайта соблюдён.
+    """MW-months that can actually be sold under contract: the site SLA holds.
 
-    Сайт, у которого доступность ниже заявленного SLA, контракт не выполняет —
-    его MW·месяцы не считаем (это и есть разница между «набрали MW» и «заработали»).
+    A site whose availability is below its declared SLA does not deliver the contract —
+    its MW-months are not counted (this is the gap between "many MW" and "sold").
     """
     tot = 0.0
     mw_by = res.get("mw_by_site") or {}
@@ -176,7 +176,7 @@ def compliant_mwmonths(res: dict) -> float:
 
 
 def compliant_mw12(res: dict) -> float:
-    """MW, которые к 12-му месяцу работают И соблюдают свой SLA."""
+    """MW that are online by month 12 AND meet their own SLA."""
     tot = 0.0
     for sid, mw in (res.get("mw_by_site") or {}).items():
         avail = float((res.get("avail_by_site") or {}).get(sid, 0.0))
@@ -187,7 +187,7 @@ def compliant_mw12(res: dict) -> float:
 
 
 def _curtail_series(curves, mw_by, modes, indices, day_hours):
-    """Сколько MW этот набор сайтов обязан сбросить в каждый час (модель)."""
+    """How many MW this set of sites must shed in each hour (model)."""
     H = np.asarray(curves["H"], dtype=float)
     out = []
     for h in day_hours:
@@ -204,14 +204,14 @@ def _curtail_series(curves, mw_by, modes, indices, day_hours):
 
 
 def stress_day_block(curves: dict, best: dict, region: str, naive_portfolio=None) -> dict:
-    """Stress-day chart: реальный день 2025 в MW + модельный куртейлмент агента и naive.
+    """Stress-day chart: a real 2025 day in MW + modelled curtailment of agent and naive.
 
-    День = час максимального спроса региона в локальном времени (CAL: 2025-08-21 20:00 PDT,
-    43,860 MW — вечерний пик, солнце уже село). Ряды: реальный demand/solar (EIA-930, MW),
-    суммарный свободный headroom подстанций и сколько MW обязаны сбросить:
-      - агент (SLA-дизайн) — почти ничего;
-      - naive-портфель «всё non-firm на максимум» — десятки MW, что и есть цена скорости
-        без дисциплины.
+    Day = the region peak-demand hour in local time (CAL: 2025-08-21 20:00 PDT,
+    43,860 MW — an evening peak, after sunset). Series: real demand/solar (EIA-930, MW),
+    total free headroom of substations, and how many MW must be shed:
+      - the agent (SLA-designed) — almost nothing;
+      - the naive "everything non-firm at max" portfolio — tens of MW, which is the price
+        of speed without discipline.
     """
     import pandas as pd
 
@@ -239,9 +239,9 @@ def stress_day_block(curves: dict, best: dict, region: str, naive_portfolio=None
             demand_day = [round(float(v), 0) for v in day["demand_mw"].fillna(0.0)]
             solar_day = [round(float(v), 0) for v in day["solar_mw"].fillna(0.0)]
     except Exception as e:  # noqa: BLE001
-        print(f"  (stress-day: реальные MW недоступны: {e})")
+        print(f"  (stress-day: real MW unavailable: {e})")
 
-    # индекс часов representative year: тот же час суток, что у пикового часа u
+    # representative-year hour index: same hour of day as the peak hour of u
     peak_hour = int(np.argmax(u))
     d0 = peak_hour // 24 * 24
     day_hours = list(range(d0, d0 + 24))
@@ -250,7 +250,7 @@ def stress_day_block(curves: dict, best: dict, region: str, naive_portfolio=None
 
     curtail_agent = _curtail_series(curves, mw_by, modes, flex_idx, day_hours)
 
-    # naive-портфель: тот же расчёт по его MW
+    # naive portfolio: same calculation on its MW
     curtail_naive = None
     if naive_portfolio:
         n_mw = {p["site_id"]: float(p.get("mw", 0)) for p in naive_portfolio}
@@ -285,9 +285,9 @@ def main():
     ap.add_argument("--region", default=DEFAULT_REGION)
     ap.add_argument("--iters", type=int, default=220)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--seeds", type=int, default=1, help="сколько сидов прогнать, взять лучший")
+    ap.add_argument("--seeds", type=int, default=1, help="how many seeds to run; keep the best")
     ap.add_argument("--policy-file", default=None,
-                    help="python-файл политики от LLM-агента (rsi_agent/gen_N.py): берём её портфель")
+                    help="policy file from the LLM agent (rsi_agent/gen_N.py): use its portfolio")
     ap.add_argument("--rsi-log", default=os.path.join(ROOT, "rsi_agent", "rsi_log.json"))
     ap.add_argument("--mock", action="store_true")
     ap.add_argument("--out", default=os.path.join(RESULTS, "loop.json"))
@@ -309,7 +309,7 @@ def main():
             return mock_evaluate(curves, portfolio)
 
         baselines_json = {}
-        # честный baseline: всё firm, максимально возможная мощность
+        # honest baseline: all firm, maximum feasible capacity
         def all_firm():
             H = curves["H"]
             order = np.argsort(-H.max(axis=1))
@@ -342,7 +342,7 @@ def main():
         eval_fn = lambda portfolio: evaluate(args.region, portfolio)  # noqa: E731
         baselines_json = {}
         if baselines is None:
-            # fallback: добросовестный baseline «всё firm, самый большой headroom первым»
+            # fallback: honest baseline "all firm, biggest headroom first"
             def _all_firm(region, curves):
                 H = np.asarray(curves["H"])
                 order = np.argsort(-H.max(axis=1))
@@ -377,7 +377,7 @@ def main():
             except Exception as e:  # noqa: BLE001
                 print(f"  !! baseline {name} failed: {e}")
 
-    # --- луп
+    # --- loop
     print(f"running RSI loop ({args.iters} iters x {args.seeds} seeds)...")
     best_log = None
     for sd in range(args.seeds):
@@ -388,7 +388,7 @@ def main():
             best_log = lg
     log = best_log
 
-    # --- фаза 2: LLM-пропозер (агент пишет код политики, симулятор судит) ---
+    # --- phase 2: LLM proposer (the agent writes policy code, the simulator judges) ---
     rsi_res = rsi_port = None
     if args.policy_file:
         print(f"LLM proposer: {args.policy_file}")
@@ -407,7 +407,7 @@ def main():
               f"deliv={rsi_res['delivered_mwmonths']:.0f} mw12={rsi_res['mw_at_month12']:.1f} "
               f"viol={rsi_res['violations_mwh']:.2f} breach={rsi_res['sla_breach_mwh']:.1f}")
 
-        # добавляем поколения LLM в кривую обучения (best-so-far, как в архиве RSI)
+        # add the LLM generations to the learning curve (best-so-far, like the RSI archive)
         gen_rows = []
         try:
             with open(args.rsi_log, encoding="utf-8") as f:
@@ -423,7 +423,7 @@ def main():
                     "change": (g.get("change", "") or "")[:160],
                 })
         except Exception as e:  # noqa: BLE001
-            print(f"  (rsi_log.json не прочитан: {e})")
+            print(f"  (rsi_log.json not readable: {e})")
 
         best_so_far = log["iterations"][-1]["score"] if log["iterations"] else -1e9
         for k, g in enumerate(gen_rows):
@@ -463,7 +463,7 @@ def main():
     else:
         meta_llm = None
 
-    # архив RSI: оставляем лучший из двух пропозеров (параметрический / LLM)
+    # RSI archive: keep the better of the two proposers (parametric / LLM)
     best, portfolio = log["best"], log["best_portfolio"]
     if rsi_res is not None and float(rsi_res["score"]) > float(log["best"]["score"]):
         print(f"  -> LLM proposer wins: {rsi_res['score']:.2f} > {log['best']['score']:.2f}")
@@ -473,8 +473,8 @@ def main():
     sites_recs = site_records(curves)
     sites_by_id = {s["id"]: s for s in sites_recs}
 
-    # --- сравнение: главная метрика = net value (там уже учтены SLA-штрафы и capex),
-    # вторая = contract-compliant MW·месяцы (только продаваемый compute).
+    # --- comparison: primary metric = net value (SLA penalties and capex are included),
+    # secondary = contract-compliant MW-months (sellable compute only).
     agent_compliant = compliant_mwmonths(best)
     agent_mw12 = compliant_mw12(best)
     for name, b in baselines_json.items():
@@ -488,7 +488,7 @@ def main():
     ref_comp = max(float(best_bl["compliant_mwmonths"]), 1.0) if best_bl else 1.0
     ref_mw12 = float(best_bl["compliant_mw12"]) if best_bl else 0.0
 
-    # самый «быстрый» наивный baseline — для показа, что скорость без надёжности стоит отрицательно
+    # the fastest naive baseline — to show that speed without reliability is worth less than nothing
     naive = baselines_json.get("max_mw_no_flex")
 
     comparison = {
@@ -498,16 +498,16 @@ def main():
         "agent_net_value_musd": round(float(best["net_value_musd"]), 2),
         "agent_compliant_mwmonths": round(agent_compliant, 1),
         "agent_compliant_mw12": round(agent_mw12, 1),
-        # baseline reference (лучший честный)
+        # baseline reference (best honest strategy)
         "baseline_ref": best_bl_name,
         "baseline_net_value_musd": round(ref_net, 2),
         "baseline_compliant_mwmonths": round(float(ref_comp), 1),
         "baseline_mw12": round(ref_mw12, 1),
         "baseline_label": (best_bl or {}).get("label", best_bl_name),
-        # наивная стратегия «подписать всё non-firm»
+        # naive strategy "sign everything non-firm"
         "naive_net_value_musd": round(float(naive["net_value_musd"]), 2) if naive else None,
         "naive_mw12": round(float(naive["mw_at_month12"]), 1) if naive else None,
-        # качество
+        # quality
         "violations": f"{float(best.get('violations_mwh', 0.0)):.1f} MWh",
         "sla": "99.9%+ (per-site SLA met)",
         "sites_energized": sum(1 for i in portfolio if i["mode"] != "skip"),

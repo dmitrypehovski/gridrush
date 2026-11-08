@@ -1,17 +1,17 @@
-# GRIDRUSH — Q&A defence: 16 опасных вопросов
+# GRIDRUSH — Q&A defence: 16 dangerous questions
 
-> **FROZEN.** Числа из `results/FINAL_NUMBERS.md`, `results/loop.json`, `results/powerflow.json`,
+> **FROZEN.** Numbers from `results/FINAL_NUMBERS.md`, `results/loop.json`, `results/powerflow.json`,
 > `results/loop_physics.json`, `results/loop_real.json`, `rsi_agent/rsi_log2.json`.
-> Формат: вопрос по-английски (так его зададут) + русская пометка, зачем спрашивают, + готовый
-> ответ дословно, 2–3 предложения. Учить наизусть не надо: выучи первые 6 слов каждого ответа.
+> Format: the question in English (that is how it will be asked) + a note on why they ask + the ready
+> answer verbatim, 2–3 sentences. No need to memorise it: learn the first 6 words of each answer.
 >
-> Три правила: **не знаешь — скажи «I don't know» и добавь, как проверишь**; каждую цифру сразу
-> переводи в решение («поэтому мы…»); **$280M — это не «мы заработали»** (это modelled compute
-> margin за 36 месяцев на синтетическом портфеле).
+> Three rules: **if you do not know — say "I don't know" and add how you will check**; turn every number
+> into a decision immediately ("so we…"); **$280M is not "we made money"** (it is modelled compute
+> margin over 36 months on a synthetic portfolio).
 
 ---
 
-## Q1. «Is this real data?» — *самый частый*
+## Q1. "Is this real data?" — *the most frequent one*
 
 > Partly — and we say which part. The hourly demand and the load shape are real 2025 EIA-930 data
 > for twelve US operators: public domain, all eight thousand seven hundred sixty hours. The sites,
@@ -19,16 +19,16 @@
 > repo and from what was said on stage, and every parameter is in the assumptions panel. So: real
 > demand shape, synthetic geometry.
 
-**Добивка:** «The comparison does not depend on the synthetic part being exact — all three
-strategies use the same sites and the same timelines.»
+**Follow-up:** "The comparison does not depend on the synthetic part being exact — all three
+strategies use the same sites and the same timelines."
 
-**Если спросят про solar:** «The solar column in the EIA-930 starter set has non-physical artifacts,
+**If they ask about solar:** "The solar column in the EIA-930 starter set has non-physical artifacts,
 so we do not use it for capacity or stress calculations — that is written down in
-`sim/assumptions.md`. We build stress on demand and on evening ramps, which are clean.»
+`sim/assumptions.md`. We build stress on demand and on evening ramps, which are clean."
 
 ---
 
-## Q2. «Why are your baselines so weak? Did you tune them to lose?»
+## Q2. "Why are your baselines so weak? Did you tune them to lose?"
 
 > We did not invent weak strategies — we implemented the two things the market actually does. All
 > firm and wait for the queue gives 0 MW at month 12: that is today's default, safe and slow.
@@ -37,11 +37,11 @@ so we do not use it for capacity or stress calculations — that is written down
 > JSON with all their numbers, and the non-firm one is genuinely faster than us; it just is not
 > sellable.
 
-**Не говорите** «the baseline is dumb». Говорите «the baseline is what people do».
+**Do not say** "the baseline is dumb". Say "the baseline is what people do".
 
 ---
 
-## Q3. «Did you tune this for one region?»
+## Q3. "Did you tune this for one region?"
 
 > Same policy, same parameters, four operators, no per-region tuning: CAISO 4.30×, ERCOT 3.41×,
 > PJM 4.07×, MISO 3.88×, each against that operator's own firm baseline — three point four to four
@@ -50,9 +50,9 @@ so we do not use it for capacity or stress calculations — that is written down
 
 ---
 
-## Q4. «This is just optimization. Where is the agent?»
+## Q4. "This is just optimization. Where is the agent?"
 
-Самый вероятный вопрос от организаторов — их критерий «learning capabilities of your agents».
+The most likely question from the organisers — their criterion "learning capabilities of your agents".
 
 > An optimiser gives you one answer. This gives you a loop that gets better each run: a proposer
 > writes a portfolio, an evaluator scores it, a **repair** step fixes what the evaluator flagged,
@@ -67,24 +67,24 @@ so we do not use it for capacity or stress calculations — that is written down
 > exact optimum of the admissible flexible-only space and firm service and batteries are dominated.
 > That round is in `rsi_agent/rsi_log2.json` and `BEST2.md`.
 
-**Терминология из `theme/rsi.md`:** это **bounded RSI** — агент улучшает свой план и свой поиск,
-не свои веса. Говорите именно так.
+**Terminology from `theme/rsi.md`:** this is **bounded RSI** — the agent improves its plan and its search,
+not its weights. Use exactly that wording.
 
 ---
 
-## Q5. «Why only 32 of 40 sites? Why not connect everything?»
+## Q5. "Why only 32 of 40 sites? Why not connect everything?"
 
 > Because 8 sites fail on economics, not on capacity: their energise date is so late that the
 > megawatt-months never repay the wait. The agent can say no — that is the difference between a plan
 > and a wish list. Every skipped site and its reason are in the JSON.
 
-**Добивка:** «A human with the same 40 sites would connect all of them and lose money on eight.»
+**Follow-up:** "A human with the same 40 sites would connect all of them and lose money on eight."
 
 ---
 
-## Q6. «Where is the power flow?» — *спросит любой энергетик*
+## Q6. "Where is the power flow?" — *any power engineer will ask this*
 
-Дословно одобренная формулировка — не пересказывать:
+The verbatim approved wording — do not paraphrase:
 
 > Two levels. The main engine is an hourly capacity verifier on a headroom profile — the same shape
 > of data a utility publishes (PG&E GRIC/ICA: 576 hourly values per line section). On top of that we
@@ -102,27 +102,27 @@ so we do not use it for capacity or stress calculations — that is written down
 > that delta is the value of real ICA data. On stage we quote the conservative limit we enforce:
 > six and a half.
 
-**Если спросят «так нарушения могут быть на самом деле?»:** «On line thermal limits and voltages —
+**If they ask "so can violations happen in reality?":** "On line thermal limits and voltages —
 that is exactly what the AC validation adds: it says a single feeder cannot host the portfolio, and
-the plan already spreads across eight substations. On the capacity limits we model, no.»
-**Если `physics.html` не готов:** первые два предложения всё равно верны; скажите «results are in
-the repo» и не называйте цифры по памяти.
-**Цифры под рукой (если дожмут):** physics-in-the-loop = 2.39×, $155.5M, 1313 продаваемых
-MW·месяцев, 44.7 МВт@12, 29 сайтов, 8/8 подстанций AC-PF clean; admission limit **6.53 МВт** на
-фидер (первое нарушение 7.03 МВт, min V 0.95785 p.u. при 100% загрузке); дельта к профильной модели
-**−44.5%** net value. Это `results/loop_physics.json` + `results/physics_gate.json`.
-**Как объяснять разницу 8.2 и 6.53 (не защищаться, а объяснять):** 8.2 MW — это первая проверка
-(топ-5 портфель, равномерное масштабирование), она показала порядок величины. 6.53 MW — консервативный
-admission limit, который теперь **enforce-ится в оптимизаторе** (распределение по пяти лучшим шинам
-пропорционально headroom; первое нарушение на 7.03 MW). **На сцене одно число — 6.5.** Если спросят:
-«Eight point two was the first sweep; six point five is the conservative limit we actually enforce —
-the difference is one is a measurement, the other is a constraint.» И сразу к 2.39×.
-**Если `physics.html` не готов:** первые два предложения всё равно верны; скажите «results are in
-the repo» и не называйте цифры по памяти.
+the plan already spreads across eight substations. On the capacity limits we model, no."
+**If `physics.html` is not ready:** the first two sentences are still true; say "results are in
+the repo" and do not quote numbers from memory.
+**Numbers at hand (if they push):** physics-in-the-loop = 2.39×, $155.5M, 1313 sellable
+MW·months, 44.7 MW@12, 29 sites, 8/8 substations AC-PF clean; admission limit **6.53 MW** per
+feeder (first violation at 7.03 MW, min V 0.95785 p.u. at 100% loading); delta to the profile model
+**−44.5%** net value. That is `results/loop_physics.json` + `results/physics_gate.json`.
+**How to explain the difference between 8.2 and 6.53 (explain, do not defend):** 8.2 MW was the first
+check (top-5 portfolio, uniform scaling); it showed the order of magnitude. 6.53 MW is the conservative
+admission limit that is now **enforced in the optimiser** (distribution across the five best buses in
+proportion to headroom; first violation at 7.03 MW). **On stage one number — 6.5.** If they ask:
+"Eight point two was the first sweep; six point five is the conservative limit we actually enforce —
+the difference is one is a measurement, the other is a constraint." And go straight to 2.39×.
+**If `physics.html` is not ready:** the first two sentences are still true; say "results are in
+the repo" and do not quote numbers from memory.
 
 ---
 
-## Q7. «What if 10 MW does not fit?»
+## Q7. "What if 10 MW does not fit?"
 
 > Then the agent does not fit 10. It picks any size from half a megawatt up to that site's actual
 > headroom — so it may install 4 today and step up later; or split the load across substations. The
@@ -131,7 +131,7 @@ the repo» и не называйте цифры по памяти.
 
 ---
 
-## Q8. «Who pays? And is $280M real money?»
+## Q8. "Who pays? And is $280M real money?"
 
 > The payer is the compute off-taker, and the $280M is not revenue — it is modelled compute margin
 > over 36 months on this synthetic portfolio, at about $1.2 million per MW-year, which is the
@@ -142,7 +142,7 @@ the repo» и не называйте цифры по памяти.
 
 ---
 
-## Q9. «Why not just put a battery everywhere?»
+## Q9. "Why not just put a battery everywhere?"
 
 > The agent bought zero batteries across 32 sites — and that is a result, not an omission. Flexible
 > service at 99.99% availability beat battery capex on this data: 0.35 million per MW plus 0.25
@@ -151,7 +151,7 @@ the repo» и не называйте цифры по памяти.
 
 ---
 
-## Q10. «Where does the SLA come from?»
+## Q10. "Where does the SLA come from?"
 
 > The menu is three tiers — 99.99, 99.9 and 99 percent — and the agent chooses per site where the
 > premium is worth paying: here 16 sites at 99.99, 6 at 99.9 and 10 at 99, which is the trade the
@@ -160,12 +160,12 @@ the repo» и не называйте цифры по памяти.
 > with a penalty, because as he said, ten minutes a day you can design for, two random hours you
 > cannot.
 
-**Добивка про куртейлмент:** «At the evening peak the naive portfolio must shed 28.4 MW. Ours sheds
-at most 1.0 — and the site that sheds it is on a 99 percent tier, so it is contracted.»
+**Follow-up on curtailment:** "At the evening peak the naive portfolio must shed 28.4 MW. Ours sheds
+at most 1.0 — and the site that sheds it is on a 99 percent tier, so it is contracted."
 
 ---
 
-## Q11. «Why is this not an Excel solver?»
+## Q11. "Why is this not an Excel solver?"
 
 > An LP or MILP would probably beat us on one fixed instance, and I would say that on stage. But it
 > gives you neither an independent verifier you can audit after the fact, nor a policy that
@@ -175,7 +175,7 @@ at most 1.0 — and the site that sheds it is on a 99 percent tier, so it is con
 
 ---
 
-## Q12. «How does this scale to 300 regions?»
+## Q12. "How does this scale to 300 regions?"
 
 > The verifier is numpy and evaluates forty sites in under 100 milliseconds, so one region is a run
 > of seconds — we already ran four. Three hundred regions is three hundred times the sites: same
@@ -184,7 +184,7 @@ at most 1.0 — and the site that sheds it is on a 99 percent tier, so it is con
 
 ---
 
-## Q13. «What will you do in the next two weeks?»
+## Q13. "What will you do in the next two weeks?"
 
 > Four things: real feeders instead of synthetic substations — PG&E GRIP and SCE ICA line sections;
 > full AC power flow with N-1 inside the loop, not beside it; an OpenADR and price signal so
@@ -194,7 +194,7 @@ at most 1.0 — and the site that sheds it is on a 99 percent tier, so it is con
 
 ---
 
-## Q14. «You are solo and had one day. What did you actually build?»
+## Q14. "You are solo and had one day. What did you actually build?"
 
 > The verifier, the three strategies, the loop with proposer, evaluator, repair and archive, the
 > dashboard, the AC power flow validation and the LLM-in-the-loop log — all local, no external API.
@@ -204,9 +204,9 @@ at most 1.0 — and the site that sheds it is on a 99 percent tier, so it is con
 
 ---
 
-## Q15. «Are there any real data in this project besides the load?»
+## Q15. "Are there any real data in this project besides the load?"
 
-Проверяют, не всё ли синтетика, кроме одного CSV.
+They are checking whether everything except one CSV is synthetic.
 
 > Yes. The hourly demand shape is real 2025 EIA-930 for twelve operators, and we also rebuilt the site
 > model on the public PG&E GRIP Data Portal — eight real PG&E substations with real names, real
@@ -214,15 +214,15 @@ at most 1.0 — and the site that sheds it is on a 99 percent tier, so it is con
 > documented and labelled: which candidate sites sit inside a substation, the interconnection
 > timelines, and the costs.
 
-**Если спросят «какие подстанции?»** — назовите две-три из `results/FINAL_NUMBERS.md`:
+**If they ask "which substations?"** — name two or three from `results/FINAL_NUMBERS.md`:
 SAN RAMON (Mission) 302.2 / 136.9 MW, STOCKDALE (Kern) 327.1 / 275.2 MW, CLAYTON (Diablo)
-193.1 / 124.9 MW. Это публичные данные PG&E, без ключа, с координатами и загрузкой 2026.
+193.1 / 124.9 MW. These are public PG&E data, no key required, with coordinates and 2026 loadings.
 
 ---
 
-## Q16. «Why is the ratio only 1.22× on real data, and not 4.3×?»
+## Q16. "Why is the ratio only 1.22× on real data, and not 4.3×?"
 
-Самый умный вопрос из всех — отвечать уверенно, это не провал, а локализация ограничения.
+The smartest question of all — answer confidently: this is not a failure but a localisation of the constraint.
 
 > Because at the substation aggregate level those real PG&E substations are large and are not the
 > bottleneck — so flexibility buys little there. PG&E's own Grid Needs Assessment shows where the
@@ -230,39 +230,39 @@ SAN RAMON (Mission) 302.2 / 136.9 MW, STOCKDALE (Kern) 327.1 / 275.2 MW, CLAYTON
 > by up to 12.4 MW. That is why the next step is circuit-level ICA, and it is exactly the data we ask
 > for.
 
-**Формула на одну строку:** «the substation aggregate is not the bottleneck — the circuit is».
-**Не оправдываться** и не называть 1.22× «слабым результатом»: профильная модель даёт 4.3× там, где
-ёмкости синтетические, реальные 1.22× показывают, что премия за гибкость исчезает на агрегате и
-возвращается на уровне цепи. Это аргумент в пользу следующего шага, а не против метода.
-Аммуниция (если начнут копать): на реальных подстанциях PG&E политика даёт **1.22×**, **397.7 МВт
-к 12-му месяцу**, **11 533 продаваемых MW·мес**, **0 нарушений**, подключены **все 40 сайтов**;
-net value $1410.1M против $1158.0M у лучшей честной стратегии. Файлы: `results/loop_real.json`,
+**One-line formula:** "the substation aggregate is not the bottleneck — the circuit is".
+**Do not be defensive** and do not call 1.22× a "weak result": the profile model gives 4.3× where the
+capacities are synthetic; the real 1.22× shows that the flexibility premium disappears at the aggregate
+level and comes back at the circuit level. That is an argument for the next step, not against the method.
+Ammunition (if they dig deeper): on real PG&E substations the policy gives **1.22×**, **397.7 MW
+by month 12**, **11 533 sellable MW·months**, **0 violations**, **all 40 sites** connected;
+net value $1410.1M vs $1158.0M for the best honest strategy. Files: `results/loop_real.json`,
 `web/dashboard_real.html`, `sim/real_sites.py`.
 
 
 ---
 
-## Если судья дожмёт (5 быстрых добивок)
+## If the judge pushes (5 quick follow-ups)
 
-| Атака | Ответ |
+| Attack | Answer |
 |---|---|
-| «98% — это просто скидка, вы продаёте продукт хуже» | «It is a different product, not a worse one: guaranteed capacity 99.99 or 99 percent, priced accordingly, with the tier chosen per site. The alternative today is a hundred percent guarantee and zero megawatts for seven years.» |
-| «Ваши таймлайны выдуманы» | «Yes, and they are the first thing to replace — they come from MISO's eighteen-to-thirty-six-month request window, and the comparison is robust because all three strategies use the same timelines. Give me your queue position and I will rerun it in a minute.» |
-| «Почему utility должен доверять плану агента?» | «Nobody should trust it — they should audit it. Every hour of the year is checked by a verifier separate from the optimiser, and the output is a table of sites, modes, MW and curtailment hours: the format a utility already reviews.» |
-| «У вас в данных артефакт по солнцу» | «Yes — the EIA-930 starter set's solar column has non-physical artifacts, so we exclude it from capacity and stress calculations and say so in the assumptions. Stress is built on demand and evening ramps, which are clean.» |
-| «Ваш агент просто перебирает варианты» | «The curve says otherwise: the parametric search plateaus at 178.6, and the jump to 279.9 comes from the LLM rewriting the policy structure, not from tuning a number. That is search over hypotheses — and the log shows each rewrite.» |
+| "98% is just a discount — you are selling a worse product" | "It is a different product, not a worse one: guaranteed capacity 99.99 or 99 percent, priced accordingly, with the tier chosen per site. The alternative today is a hundred percent guarantee and zero megawatts for seven years." |
+| "Your timelines are made up" | "Yes, and they are the first thing to replace — they come from MISO's eighteen-to-thirty-six-month request window, and the comparison is robust because all three strategies use the same timelines. Give me your queue position and I will rerun it in a minute." |
+| "Why should the utility trust the agent's plan?" | "Nobody should trust it — they should audit it. Every hour of the year is checked by a verifier separate from the optimiser, and the output is a table of sites, modes, MW and curtailment hours: the format a utility already reviews." |
+| "Your data has a solar artifact" | "Yes — the EIA-930 starter set's solar column has non-physical artifacts, so we exclude it from capacity and stress calculations and say so in the assumptions. Stress is built on demand and evening ramps, which are clean." |
+| "Your agent is just brute-forcing options" | "The curve says otherwise: the parametric search plateaus at 178.6, and the jump to 279.9 comes from the LLM rewriting the policy structure, not from tuning a number. That is search over hypotheses — and the log shows each rewrite." |
 
 ---
 
-## Чего не говорить никогда
+## What never to say
 
-1. **Не** «real data» про сайты, подстанции, таймлайны. Только: «real 2025 EIA-930 demand shape;
-   synthetic site geometry and interconnection timelines, documented».
-2. **Не** «zero violations» без «in the model» / «of the capacity limits we model». Иначе Q6
-   добивает. Во всех четырёх регионах теперь 0 MWh — но всё равно говорите «in the model».
-3. **Не** «we made $280M», не «revenue», не «profit». Только: «modelled compute margin over 36
-   months on this synthetic portfolio».
-4. **Не** ссылайтесь на солнечную колонку из CSV — там нефизические артефакты (±12–16 GW/h).
-5. **Не** обещайте «5 nines» и не называйте `mv_oberrhein` «нашим фидером» — это публичный
-   немецкий тест-кейс, и мы используем его как валидацию класса нагрузки, а не как площадку.
-6. **Не** «we beat an optimiser». Говорите «we give you the loop, the verifier and the curve».
+1. **Never** "real data" about sites, substations, timelines. Only: "real 2025 EIA-930 demand shape;
+   synthetic site geometry and interconnection timelines, documented".
+2. **Never** "zero violations" without "in the model" / "of the capacity limits we model". Otherwise Q6
+   finishes you off. All four regions now report 0 MWh — but still say "in the model".
+3. **Never** "we made $280M", never "revenue", never "profit". Only: "modelled compute margin over 36
+   months on this synthetic portfolio".
+4. **Never** cite the solar column from the CSV — it has non-physical artifacts (±12–16 GW/h).
+5. **Never** promise "5 nines" and never call `mv_oberrhein` "our feeder" — it is a public
+   German test case, and we use it as validation of the load class, not as a site.
+6. **Never** "we beat an optimiser". Say "we give you the loop, the verifier and the curve".

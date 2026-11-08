@@ -1,18 +1,18 @@
-"""GRIDRUSH — evaluator для LLM-in-the-loop (RSI-агент как proposer).
+"""GRIDRUSH — evaluator for the LLM-in-the-loop (the RSI agent as proposer).
 
-Агент пишет файл политики `rsi_agent/gen_N.py` и вызывает:
+The agent writes a policy file `rsi_agent/gen_N.py` and calls:
     python3 rsi_agent/eval.py --policy rsi_agent/gen_N.py --region CAL
 
-Файл политики может содержать ЛЮБОЕ из:
-    PARAMS = [9 floats in 0..1]                      # передать в loop.policy.build_portfolio
-    def build_portfolio(curves) -> list[dict]        # своя логика портфеля
-    def make_portfolio(curves) -> list[dict]         # алиас
+The policy file may contain ANY of:
+    PARAMS = [9 floats in 0..1]                      # passed to loop.policy.build_portfolio
+    def build_portfolio(curves) -> list[dict]        # its own portfolio logic
+    def make_portfolio(curves) -> list[dict]         # alias
 
-Формат портфеля (CONTRACT §4):
+Portfolio format (CONTRACT §4):
     {"site_id": str, "mode": "skip|firm|flex|battery", "mw": float,
      "sla": 0.9999|0.999|0.99, "battery_mwh": float}
 
-Печатает JSON с метриками. Ничего не пишет на диск.
+Prints JSON metrics. Writes nothing to disk.
 """
 from __future__ import annotations
 
@@ -76,7 +76,7 @@ def main() -> int:
         "sla_mix": {str(s): sum(1 for p in active if abs(float(p.get("sla", 0)) - s) < 1e-9)
                     for s in (0.9999, 0.999, 0.99)},
     }
-    # contract-compliant MW·months (только сайты, где доступность >= заявленного SLA)
+    # contract-compliant MW-months (only sites whose availability >= their declared SLA)
     comp = 0.0
     for sid, mw in (res.get("mw_by_site") or {}).items():
         avail = float((res.get("avail_by_site") or {}).get(sid, 0.0))

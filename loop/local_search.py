@@ -1,17 +1,17 @@
-"""GRIDRUSH — локальный поиск: вторая половина RSI-лупа.
+"""GRIDRUSH — local search: the second half of the RSI loop.
 
-Параметрический мутатор (`search.hill_climb`) находит хорошую *глобальную* политику, но
-она грубая: компромиссы между MW / SLA / батареей на каждом сайте решаются эвристикой.
-Здесь агент делает то, что делает настоящий инженер: берёт текущий портфель, для каждого
-сайта предлагает варианты (skip / flex / battery × MW × SLA × ёмкость батареи), и
-**симулятор судит каждый вариант**. Принимается только то, что повышает score при
-нулевых нарушениях сети и нулевом SLA-breach.
+The parametric mutator (`search.hill_climb`) finds a good *global* policy, but it is
+coarse: the MW / SLA / battery trade-offs on each site are decided by a heuristic.
+Here the agent does what a real engineer does: take the current portfolio, propose
+variants per site (skip / flex / battery x MW x SLA x battery energy), and let the
+**simulator judge every variant**. Only changes that raise the score with zero grid
+violations and zero SLA breach are accepted.
 
-Каждый принятый шаг — это точка в кривой обучения (`iterations`), именно её видно на демо:
-«предложил → проверил → стало лучше».
+Every accepted step is a point on the learning curve (`iterations`) — the demo shows
+"proposed -> verified -> better".
 
-Стоимость: ~6000 вызовов evaluate() по 3.7 мс ≈ 20–25 с. Это осознанный trade-off:
-качество финального портфеля важнее времени прогона.
+Cost: ~6000 evaluate() calls at 3.7 ms ~ 20-25 s. That is a deliberate trade-off:
+final portfolio quality matters more than run time.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ SLA_LEVELS = (0.9999, 0.999, 0.99)
 
 
 def _mw_grid(cap_mw: float) -> list[float]:
-    """Сетка кандидатных MW для сайта: половина того, что физически влезает."""
+    """Candidate MW grid for a site: half what physically fits."""
     cap = float(max(0.0, cap_mw))
     if cap < MIN_MW:
         return []
@@ -59,10 +59,10 @@ def _is_valid(r: dict) -> bool:
 def local_search(curves, evaluate_fn, portfolio, max_evals: int = 7000,
                  sweeps: int = 3, verbose: bool = True, log: list | None = None,
                  on_step=None) -> dict:
-    """Улучшает портфель жадным покоординатным поиском с симулятором в роли судьи.
+    """Improves the portfolio by greedy coordinate search with the simulator as judge.
 
-    Возвращает {"portfolio","result","steps","n_evals","wall_s"}.
-    `steps` — принятые улучшения (для кривой обучения).
+    Returns {"portfolio","result","steps","n_evals","wall_s"}.
+    `steps` — accepted improvements (for the learning curve).
     """
     import time
     t0 = time.time()
@@ -86,7 +86,7 @@ def local_search(curves, evaluate_fn, portfolio, max_evals: int = 7000,
             best_res, best_item, best_score = None, None, float(cur_res["score"])
             for cand in _candidates(curves, i, mw_grids[i]):
                 trial = base + [cand] if cand["mode"] != "skip" else base
-                # исключаем очевидно текущий вариант, чтобы не тратить вызовы
+                # skip the obviously current variant to save calls
                 if cand["mode"] != "skip" and any(
                         p.get("site_id") == sid and p.get("mode") == cand["mode"]
                         and abs(float(p.get("mw", 0)) - cand["mw"]) < 1e-9

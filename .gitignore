@@ -5,3 +5,4 @@ __pycache__/
 web/_screenshot.png
 web/qa_*.png
 *.zip
+.chrome-profile*/

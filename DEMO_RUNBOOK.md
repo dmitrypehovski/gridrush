@@ -32,8 +32,11 @@
 ## 3. Что открыть на сцене (чек-лист за 10 минут до)
 
 1. `open /Users/dmitrypehovski/Documents/deepseek-harness/default-workspace/gridrush/web/dashboard.html`
-   — один таб, полный экран, zoom 125%. Карта теперь **географическая** (координаты из `data/sites.json`),
+   — один таб, полный экран. Карта теперь **географическая** (координаты из `data/sites.json`),
    кривая обучения на загрузке уже нарисована полностью; `Replay loop` перезапускает анимацию.
+   **Экран:** разрешение **1920×1080, zoom 100%** — это идеальный режим. Если проектор/ноут даёт
+   меньше (1280×800, 1366×768) — дашборд сам включит compact-режим. **Не ставь zoom >100%** —
+   на 125% всё поедет.
 2. Проверь: видны **три стратегии** (firm / non-firm / GRIDRUSH), кнопка **Replay loop**, карта
    8 подстанций, stacked bar «MW по месяцам», «worst day».
 3. Отдельный таб: `gridrush/web/physics.html` — реальный AC power flow (на случай вопроса
@@ -105,6 +108,21 @@
 | 17:00 | **Дедлайн сабмита.** |
 | 17:00–18:20 | Отдых, вода, ещё одна репетиция. |
 | 18:30 | Демо. |
+
+## 7.5 Если судья попросит «запусти при мне»
+
+Живой прогон существует, но он терминальный (26 секунд), не визуальный. Команда:
+
+```bash
+cd /Users/dmitrypehovski/Documents/deepseek-harness/default-workspace/gridrush
+python3 loop/run.py --region CAL --iters 200 --seeds 4 --policy-file rsi_agent/gen_6.py
+python3 web/build.py results/loop.json && open web/dashboard.html
+```
+
+Что сказать: «Here it is live: 200 iterations of the fast search, then the seven LLM generations,
+evaluated against all 8,760 hours — twenty-six seconds. I've also got the recorded run on screen if
+we want to keep moving.» Если сцена не готова ждать — не запускай, покажи Replay loop и скажи
+«the same run, replayed».
 
 ## 8. Подстраховка
 

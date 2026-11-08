@@ -258,6 +258,72 @@
     border-radius:7px;padding:5px 12px;font-size:10px;display:none;box-shadow:0 8px 30px rgba(0,0,0,.5);
   }
   #err-banner.on{display:block}
+
+  /* ==========================================================================
+     COMPACT MODE — low-res projectors (1280×800, 1366×768).
+     Triggered below 1420px width or 830px height. Everything larger (1440×900,
+     1600×900, 1920×1080) is byte-for-byte the same layout as before.
+     ========================================================================== */
+  @media (min-width: 1421px) and (max-width: 1540px) {
+    .panel-map .psub{display:none}
+  }
+  @media (max-width: 1420px), (max-height: 830px) {
+    body{gap:6px;padding:6px 10px 5px}
+    footer{display:none !important}
+    header.top{gap:10px}
+    .logo{font-size:22px}
+    .tagline{font-size:10px;margin-top:2px}
+    .meta{gap:5px}
+    .chip{font-size:8.5px;padding:2px 6px;border-radius:5px}
+    .meta .chip.dim{display:none}
+    .kpis{gap:6px}
+    .kpi{padding:5px 10px 6px;border-radius:8px}
+    .klabel{font-size:8.2px;letter-spacing:.09em}
+    .knum{font-size:26px}
+    .kunit{font-size:11px}
+    .ksub{font-size:8.2px;margin-top:1px}
+    .main{gap:6px}
+    .panel{padding:5px 7px 4px;border-radius:8px}
+    .ph{min-height:18px;gap:6px}
+    .ptitle{font-size:9px;letter-spacing:.06em}
+    .psub{display:none}
+    .step{width:12px;height:12px;font-size:7.5px;margin-right:4px;vertical-align:0}
+    .ph-right{gap:6px}
+    .legend{font-size:8px;gap:7px}
+    .seg button{font-size:8px;padding:2px 6px}
+    .btn{font-size:9px;padding:2px 7px}
+    .counter{gap:3px}
+    .clabel{font-size:8px;letter-spacing:.05em}
+    .cval{font-size:9.5px}
+    .note{font-size:8px;height:12px;line-height:12px}
+    #strat-note,#bars-note,#learn-note,#stress-note{white-space:normal;height:auto;min-height:12px;max-height:24px;line-height:12px}
+    #map-note{white-space:nowrap;height:12px;line-height:12px;font-size:8px;overflow:hidden;color:#8090a8}
+    .sub-label{font-size:8px}
+    .ax-label{font-size:9px}
+    .ax-title{font-size:8px}
+    .ref-label{font-size:8px}
+    .panel-assump{height:100px;padding:4px 8px 3px}
+    .assump-grid{column-gap:16px}
+    .ass{grid-template-columns:124px minmax(0,1fr) auto;gap:6px}
+    .ak{font-size:8.2px}
+    .av{font-size:8.2px}
+    .av em{display:none}
+    .as{font-size:7.2px;padding:0 4px;letter-spacing:.03em}
+    .assump-foot{font-size:8px;height:11px;line-height:11px}
+    .softchip{font-size:8px;padding:1px 5px}
+    .panel-strategies{padding:5px 8px 4px}
+    .strat-list{gap:4px;margin-top:3px}
+    .strat{padding:3px 7px 4px;border-radius:6px}
+    .strat-label{font-size:8.5px}
+    .strat-chip{font-size:7.4px;padding:0 4px}
+    .strat-stats{gap:12px;margin-top:1px}
+    .sval{font-size:18px}
+    .slab{font-size:7.5px}
+    .strat-bar{height:2px;margin-top:3px}
+    .tip{font-size:9px;max-width:220px}
+    .trow{font-size:8.5px;line-height:1.45}
+    .tv{font-size:8.5px}
+  }
 </style>
 </head>
 <body data-render="pending">
@@ -485,6 +551,9 @@
     svg.appendChild(t);
     return t;
   }
+  function isCompact() {
+    try { return window.matchMedia("(max-width: 1420px), (max-height: 830px)").matches; } catch (e) { return false; }
+  }
   function measure(el) {
     var w = 0, h = 0;
     try { var r = el.getBoundingClientRect(); w = r.width; h = r.height; } catch (e) {}
@@ -622,6 +691,7 @@
   function renderKPIs() {
     var el = document.getElementById("kpis");
     if (!el) return;
+    var compact = isCompact();
     var comp = obj(D && D.comparison);
     var best = obj(D && D.best);
     var bs = bestBaselineEntry(comp.baseline_ref);
@@ -699,7 +769,8 @@
     } else {
       k3sub = "delivered \u00d7 $0.10M/MW&middot;mo &minus; capex &minus; SLA penalty";
     }
-    var k4sub = (sla ? "SLA " + esc(sla) + " &middot; " : "") + "independent hour-by-hour verifier";
+    var k4sub = (sla ? "SLA " + esc(sla) + " &middot; " : "") +
+      (compact ? "independent verifier" : "independent hour-by-hour verifier");
 
     var cards = [
       {
@@ -742,6 +813,7 @@
 
   /* ---- mini strategy comparison (net value) ---- */
   function strategyRows() {
+    var compact = isCompact();
     var comp = obj(D && D.comparison);
     var best = obj(D && D.best);
     var bs = bestBaselineEntry(comp.baseline_ref);
@@ -800,6 +872,7 @@
     return (v >= 0 ? "+" : "") + money(v);
   }
   function strategyCardRows() {
+    var compact = isCompact();
     var comp = obj(D && D.comparison);
     var best = obj(D && D.best);
     var bs = bestBaselineEntry(comp.baseline_ref);
@@ -1657,6 +1730,12 @@
     if (!el) return;
     if (mapState.view === "sla") { drawScatter(el); return; }
     var rows = siteRows();
+    var compact = isCompact();
+    var subMw = {};
+    rows.forEach(function (r) {
+      if (!r.sub) return;
+      subMw[r.sub] = (subMw[r.sub] || 0) + (r.mode === "skip" ? 0 : r.mw);
+    });
     var subEl = document.getElementById("map-sub");
     var noteEl = document.getElementById("map-note");
     if (noteEl) noteEl.innerHTML = mapLegendHTML(rows);
@@ -1711,14 +1790,15 @@
       var perSub = Math.max.apply(null, subs.map(function (s) { return countBy[s] || 1; }));
       perSub = Math.max(1, perSub);
       var colW = plot.w / Math.max(1, subs.length);
-      var rowH = plot.h / perSub;
+      var topPad = compact ? 24 : 0;
+      var rowH = (plot.h - topPad) / perSub;
       subs.forEach(function (s, ci) {
         var idx = 0;
         rows.forEach(function (r) {
           if (r.sub !== s) return;
           pos[r.id] = {
             x: plot.x + colW * (ci + 0.5),
-            y: plot.y + rowH * (idx + 0.5)
+            y: plot.y + topPad + rowH * (idx + 0.5)
           };
           idx++;
         });
@@ -1740,22 +1820,33 @@
     svg.appendChild(svgEl("rect", { x: 0.5, y: 0.5, width: w - 1, height: h - 1, rx: 7, "class": "map-frame" }));
 
     /* substation labels (geo mode only) */
+    var deferredLabels = [];
     if (!schematic) {
       var bySub = {};
       rows.forEach(function (r) {
         if (!r.sub || !pos[r.id]) return;
-        if (!bySub[r.sub]) bySub[r.sub] = { x: 0, y: 0, n: 0, cap: r.cap };
+        if (!bySub[r.sub]) bySub[r.sub] = { x: 0, y: 0, n: 0, cap: r.cap, minY: 1e9 };
         bySub[r.sub].x += pos[r.id].x;
         bySub[r.sub].y += pos[r.id].y;
         bySub[r.sub].n++;
+        bySub[r.sub].minY = Math.min(bySub[r.sub].minY, pos[r.id].y);
         if (r.cap !== null) bySub[r.sub].cap = r.cap;
       });
       Object.keys(bySub).forEach(function (s) {
         var b = bySub[s];
         var cx = b.x / b.n, cy = b.y / b.n;
-        svg.appendChild(svgEl("line", { x1: cx - 3, y1: cy, x2: cx + 3, y2: cy, "class": "map-grid", stroke: "#33465f" }));
-        svg.appendChild(svgEl("line", { x1: cx, y1: cy - 3, x2: cx, y2: cy + 3, "class": "map-grid", stroke: "#33465f" }));
-        txt(svg, cx, cy - 7, s + (b.cap !== null ? " \u00b7 " + Math.round(b.cap) + "MW" : ""), "sub-label", { "text-anchor": "middle" });
+        var subSum = subMw[s];
+        var label = compact
+          ? s + (subSum !== undefined ? " \u00b7 " + fmtInt(subSum) + "MW" : "")
+          : s + (b.cap !== null ? " \u00b7 " + Math.round(b.cap) + "MW" : "");
+        if (compact) {
+          /* на низком разрешении подпись рисуем поверх точек, на подложке */
+          deferredLabels.push({ x: cx, y: Math.max(plot.y + 15, b.minY - 6), tx: cx, ty: b.minY, text: label });
+        } else {
+          svg.appendChild(svgEl("line", { x1: cx - 3, y1: cy, x2: cx + 3, y2: cy, "class": "map-grid", stroke: "#33465f" }));
+          svg.appendChild(svgEl("line", { x1: cx, y1: cy - 3, x2: cx, y2: cy + 3, "class": "map-grid", stroke: "#33465f" }));
+          txt(svg, cx, cy - 7, label, "sub-label", { "text-anchor": "middle" });
+        }
       });
     } else {
       var subs2 = [];
@@ -1767,7 +1858,14 @@
           x1: cx, y1: plot.y + 14, x2: cx, y2: plot.y + plot.h - 4,
           stroke: "#101b29", "stroke-width": "1", "stroke-dasharray": "3 6"
         }));
-        txt(svg, cx, plot.y + 8, s, "sub-label", { "text-anchor": "middle" });
+        if (compact) {
+          txt(svg, cx, plot.y + 8, s, "sub-label", { "text-anchor": "middle" });
+          txt(svg, cx, plot.y + 17, fmtInt(subMw[s] || 0) + "MW", "sub-label", {
+            "text-anchor": "middle", "font-size": "8px", fill: "#8090a8", "stroke-width": "2px"
+          });
+        } else {
+          txt(svg, cx, plot.y + 8, s, "sub-label", { "text-anchor": "middle" });
+        }
       });
     }
 
@@ -1781,13 +1879,38 @@
       var p = pos[r.id];
       if (!p) return;
       var isSkip = r.mode === "skip";
-      var rad = isSkip ? 2.4 : clamp(3.2 + 5.2 * Math.sqrt(Math.max(0.5, r.mw) / 10), 3.2, 8.6);
+      var rad = compact
+        ? (isSkip ? 3 : clamp(4.2 + 5.6 * Math.sqrt(Math.max(0.5, r.mw) / 10), 4.2, 10))
+        : (isSkip ? 2.4 : clamp(3.2 + 5.2 * Math.sqrt(Math.max(0.5, r.mw) / 10), 3.2, 8.6));
       var c = svgEl("circle", {
         cx: p.x, cy: p.y, r: rad, "class": "site", fill: siteColor(r),
         "fill-opacity": isSkip ? "0.45" : "0.95"
       });
       c.__row = r;
       svg.appendChild(c);
+    });
+    deferredLabels.sort(function (a, b) {
+      if (Math.abs(a.y - b.y) > 4) return a.y - b.y;
+      return a.x - b.x;
+    });
+    for (var dli = 1; dli < deferredLabels.length; dli++) {
+      var dA = deferredLabels[dli - 1], dB = deferredLabels[dli];
+      var wA = dA.text.length * 4.9 + 10, wB = dB.text.length * 4.9 + 10;
+      if (Math.abs(dB.x - dA.x) < (wA + wB) / 2 + 2 && dB.y - dA.y < 16) dB.y = dA.y + 16;
+    }
+    deferredLabels.forEach(function (L) {
+      var tw = L.text.length * 4.9 + 12;
+      var lx = clamp(L.x, plot.x + tw / 2, plot.x + plot.w - tw / 2);
+      var ly = clamp(L.y, plot.y + 16, plot.y + plot.h - 6);
+      svg.appendChild(svgEl("line", {
+        x1: lx, y1: ly + 4, x2: L.tx, y2: L.ty, stroke: "#33465f",
+        "stroke-width": "1", "stroke-dasharray": "2 2", opacity: "0.85"
+      }));
+      svg.appendChild(svgEl("rect", {
+        x: lx - tw / 2, y: ly - 11, width: tw, height: 15, rx: 3,
+        fill: "rgba(9,15,23,.9)", stroke: "#26364f", "stroke-width": "0.8"
+      }));
+      txt(svg, lx, ly, L.text, "sub-label", { "text-anchor": "middle", "font-size": "8px" });
     });
     attachSiteTips(svg, el);
   }
@@ -1799,6 +1922,7 @@
     });
   }
   function drawScatter(el) {
+    var compact = isCompact();
     var rows = scatterRows();
     var subEl = document.getElementById("map-sub");
     var noteEl = document.getElementById("map-note");
@@ -1864,7 +1988,7 @@
       });
       c.__row = r;
       svg.appendChild(c);
-      if (labelCount < 5 && r.mw > 3) {
+      if (!compact && labelCount < 5 && r.mw > 3) {
         txt(svg, x + rad + 3, y + 3, r.id, "scatter-label");
         labelCount++;
       }

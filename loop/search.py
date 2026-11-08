@@ -27,7 +27,7 @@ def evaluate_params(curves, evaluate_fn, params) -> dict:
 
 
 def hill_climb(curves, evaluate_fn, n_iter: int = 220, seed: int = 0,
-               init=None, verbose: bool = True) -> dict:
+               init=None, verbose: bool = True, on_iter=None) -> dict:
     """Простой (1+λ) hill-climbing с адаптивным шагом и рестартом.
 
     Возвращает {"best_params","best","iterations","history","n_evals","wall_s"}.
@@ -85,6 +85,13 @@ def hill_climb(curves, evaluate_fn, n_iter: int = 220, seed: int = 0,
                            "mw_at_month12": round(float(best.get("mw_at_month12", 0.0)), 2),
                            "violations_mwh": round(float(best.get("violations_mwh", 0.0)), 3),
                            "net_value_musd": round(float(best.get("net_value_musd", 0.0)), 3)})
+        if on_iter is not None:
+            on_iter({"phase": "parametric", "iter": it,
+                     "score": round(float(best["score"]), 4),
+                     "candidate_score": round(float(cand_res["score"]), 4),
+                     "delivered_mwmonths": round(float(best.get("delivered_mwmonths", 0.0)), 2),
+                     "mw_at_month12": round(float(best.get("mw_at_month12", 0.0)), 2),
+                     "net_value_musd": round(float(best.get("net_value_musd", 0.0)), 3)})
         if verbose and (it % 20 == 0 or it == n_iter - 1):
             print(f"  iter {it:3d}  best_score={best['score']:9.3f}  "
                   f"delivered={best.get('delivered_mwmonths', 0):7.1f} MW·mo  "

@@ -57,7 +57,8 @@ def _is_valid(r: dict) -> bool:
 
 
 def local_search(curves, evaluate_fn, portfolio, max_evals: int = 7000,
-                 sweeps: int = 3, verbose: bool = True, log: list | None = None) -> dict:
+                 sweeps: int = 3, verbose: bool = True, log: list | None = None,
+                 on_step=None) -> dict:
     """Улучшает портфель жадным покоординатным поиском с симулятором в роли судьи.
 
     Возвращает {"portfolio","result","steps","n_evals","wall_s"}.
@@ -118,6 +119,8 @@ def local_search(curves, evaluate_fn, portfolio, max_evals: int = 7000,
                     "net_value_musd": round(float(best_res["net_value_musd"]), 3),
                     "n_active": len(cur),
                 })
+                if on_step is not None:
+                    on_step({"phase": "local", "gen": len(steps) - 1, **steps[-1]})
                 if verbose:
                     print(f"  local[{sweep}] {sid:7s} -> {steps[-1]['change']:42s} "
                           f"score={best_res['score']:8.2f}  net=${best_res['net_value_musd']:.1f}M")

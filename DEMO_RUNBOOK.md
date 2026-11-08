@@ -109,20 +109,33 @@
 | 17:00–18:20 | Отдых, вода, ещё одна репетиция. |
 | 18:30 | Демо. |
 
-## 7.5 Если судья попросит «запусти при мне»
+## 7.5 Если судья попросит «запусти при мне» — LIVE RUN
 
-Живой прогон существует, но он терминальный (26 секунд), не визуальный. Команда:
+Есть настоящий живой прогон в браузере (отдельная страница, основной дашборд не трогает):
 
 ```bash
 cd /Users/dmitrypehovski/Documents/deepseek-harness/default-workspace/gridrush
-python3 loop/run.py --region CAL --iters 200 --seeds 4 --policy-file rsi_agent/gen_6.py
-python3 web/build.py results/loop.json && open web/dashboard.html
+python3 web/live_server.py
 ```
 
-Что сказать: «Here it is live: 200 iterations of the fast search, then the seven LLM generations,
-evaluated against all 8,760 hours — twenty-six seconds. I've also got the recorded run on screen if
-we want to keep moving.» Если сцена не готова ждать — не запускай, покажи Replay loop и скажи
-«the same run, replayed».
+Открывается `http://127.0.0.1:8767/` — **12 секунд**, и на глазах: score растёт $0 → $279.9M,
+в логе видно, как параметрический поиск сменяется локальным (агент правит план сайт-за-сайтом:
+`S07-5 → flex 4.0 MW @ 0.9990`), в конце подключается LLM-политика и выдаёт финальные
+**$279.9M / 85.4 MW / 0 нарушений**.
+
+Что сказать: «This is live, not a recording: the proposer writes a plan, the verifier replays all
+eight thousand seven hundred sixty hours, the archive keeps the best. Twelve seconds. The last jump
+is the policy the LLM rewrote during the day.»
+
+Скриншот финала для бэкапа: `web/qa_live_run.png`. Если сцена не готова ждать 12 секунд —
+не запускай, покажи `Replay loop` и скажи «the same run, replayed».
+
+## 7.6 One-pager для судей
+
+`pitch/GRIDRUSH-one-pager.pdf` — одна страница A4 landscape: три стратегии, KPI, кривая обучения,
+«how it learns», физика, real/synthetic, команды запуска. Можно распечатать 3–5 копий и оставить
+после демо, или отправить в форму как дополнение. Пересобрать: `python3 pitch/build_onepager.py`
+(читает `results/loop.json`), затем print-to-pdf Chrome (см. `pitch/MAKE_PDF.md`).
 
 ## 8. Подстраховка
 

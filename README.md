@@ -144,7 +144,8 @@ Dev/mock mode without the simulator: `python3 loop/run.py --mock --iters 120`.
 | `loop/` | RSI loop: `policy.py` (parameterized policy + self-repair), `search.py` (mutator), `local_search.py` (per-site proposer), `run.py` (CLI → `results/loop.json`) |
 | `results/FINAL_NUMBERS.md` | the frozen numbers every pitch artifact references |
 | `rsi_agent/` | LLM-in-the-loop generations: `eval.py`, `gen_*.py`, `rsi_log.json`, `BEST.md` |
-| `web/` | `dashboard.html` — one self-contained offline file (loop replay, portfolio map, stress day, strategy comparison) |
+| `web/` | `dashboard.html` — one self-contained offline file (loop replay, portfolio map, stress day, strategy comparison); `live_server.py` — live run streamed to the browser (`python3 web/live_server.py`, ~12 s) |
+| `pitch/one-pager.html` + `GRIDRUSH-one-pager.pdf` | one-page leave-behind for judges, generated from the frozen JSON by `build_onepager.py` |
 | `pitch/` | `submission.md`, `demo-script.md` (3 min, timed), `qa-defense.md`, `hooks.md` |
 | `data/` | EIA-930 hourly 2025 starter dataset (public domain) |
 | `CONTRACT.md` | frozen model/API/JSON contract used to build this in 4 hours |

@@ -1,0 +1,64 @@
+{
+ "round": 2,
+ "start_from": "rsi_agent/gen_6.py (round-1 best, score 279.9082)",
+ "policy_space": "flex-only exact DP per substation; round 2 resumes from the saved archive",
+ "generations": [
+  {
+   "gen": 7,
+   "file": "gen_7.py",
+   "score": 279.9082,
+   "net_value_musd": 279.908,
+   "compliant_mwmonths": 2490.58,
+   "mw_at_month12": 85.39,
+   "violations_mwh": 0.0,
+   "sla_breach_mwh": 0.0,
+   "n_active": 32,
+   "kept": false,
+   "change": "continual round 2: re-ran the round-1 best policy as the new baseline"
+  },
+  {
+   "gen": 8,
+   "file": "gen_8.py",
+   "score": 280.2268,
+   "net_value_musd": 280.227,
+   "compliant_mwmonths": 2493.61,
+   "mw_at_month12": 85.51,
+   "violations_mwh": 0.0,
+   "sla_breach_mwh": 0.0,
+   "n_active": 32,
+   "kept": true,
+   "change": "coordinate ascent on (mw, SLA) starting from gen_6, extra sweep"
+  },
+  {
+   "gen": 9,
+   "file": "gen_9.py",
+   "score": 280.256,
+   "net_value_musd": 280.256,
+   "compliant_mwmonths": 2493.85,
+   "mw_at_month12": 85.51,
+   "violations_mwh": 0.0,
+   "sla_breach_mwh": 0.0,
+   "n_active": 32,
+   "kept": true,
+   "change": "same ascent + earlier SLA-tier switch on the tightest substations"
+  },
+  {
+   "gen": 10,
+   "file": "gen_10.py",
+   "score": 278.5042,
+   "net_value_musd": 278.504,
+   "compliant_mwmonths": 2479.91,
+   "mw_at_month12": 85.03,
+   "violations_mwh": 0.0,
+   "sla_breach_mwh": 0.0,
+   "n_active": 32,
+   "kept": false,
+   "change": "aggressive retune of the SLA mix — regressed"
+  }
+ ],
+ "best_gen": 9,
+ "best_file": "gen_9.py",
+ "best_score": 280.256,
+ "delta_vs_round1_pct": 0.124,
+ "note": "Round 2 was run as a continual-improvement check: the archive persisted, the proposer resumed from gen_6 and produced four more generations. The best (gen_9) is +0.12% — the policy has converged on this model. The shipped headline policy remains gen_6; gen_9 is kept as evidence that the loop can resume and that its own improvement signal goes to zero (no overfitting to the metric)."
+}

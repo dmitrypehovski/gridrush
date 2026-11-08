@@ -137,6 +137,17 @@ is the policy the LLM rewrote during the day.»
 Live-run — отдельная опция «покажи, что оно правда считает сейчас». Если сцена не готова ждать 12 секунд —
 не запускай, покажи `Replay loop` и скажи «the same run, replayed».
 
+## 7.55 Physics-in-the-loop и все регионы (для Q&A и «а покажи ещё»)
+
+- **`web/dashboard_physics.html`** — вариант, где реальный AC power flow встроен в петлю как
+  admission-constraint (6.53 МВт на подстанцию, все 8 подстанций clean): **2.39× / $155.5M**.
+  Отвечает на «а где power flow?» без оговорок: он внутри оптимизации.
+- **`web/regions.html`** — четыре оператора (CAL/TEX/PJM/MISO) + карточка physics-in-the-loop,
+  со ссылками на `dashboard_<REGION>.html`. Отвечает на «вы подогнали под один регион?».
+- Пересобрать: `<venv>/python sim/physics_gate.py` → `<venv>/python loop/run_physics.py
+  --warm-start results/loop.json --budget 2500` → `python3 web/build.py results/loop_physics.json
+  -o web/dashboard_physics.html`; `python3 web/build_regions.py`.
+
 ## 7.6 One-pager для судей
 
 `pitch/GRIDRUSH-one-pager.pdf` — одна страница A4 landscape: три стратегии, KPI, кривая обучения,

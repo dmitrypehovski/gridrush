@@ -35,9 +35,8 @@
 
 ### 2:30 — EXPANDS *(three fingers)*
 
-- "feeders / physics / signal"
-- "**8 MW spare** on a real feeder; our five biggest sites need **32**"
-- "**a siting problem, not a megawatt problem**"
+- "feeders / physics"
+- "**6.5 MW spare; five biggest sites need 32 → physics inside the loop: 2.4× instead of 4.3×**"
 
 ### 2:55 — ASK
 
@@ -79,5 +78,5 @@
    loses **$450M**; GRIDRUSH gives **85 MW** and **$280M** of modelled margin — **4.3×**.
 5. **Zero violations in the model**, every site inside its SLA, **32 of 40** sites — the agent can
    say no.
-6. Same policy, **four operators, no tuning: 3.4 to 4.3× and zero violations**. Real AC power flow says **8 MW spare** on
+6. Same policy, **four operators, no tuning: 3.4 to 4.3× and zero violations**. Real AC power flow says **6.5 MW spare** on
    one feeder versus **32 MW** for our five biggest sites: a siting problem, not a megawatt problem.

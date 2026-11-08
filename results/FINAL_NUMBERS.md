@@ -57,6 +57,39 @@ Ratios: **4.30×** net value, **3.82×** contract-compliant MW·months, **85.4 M
 Формулировка для судей: «the same policy, four operators, 3.4–4.3× and zero violations — no per-region
 tuning».
 
+## Physics-in-the-loop (закрывает «AC power flow вне петли»)
+
+Реальный AC power flow (`pandapower`, `mv_oberrhein`, настоящий 20 кВ фидер) измеряет
+**допустимую добавку нагрузки на подстанцию: 6.53 МВт** (первое нарушение на 7.03 МВт;
+при лимите min V 0.95785 p.u., загрузка 100.0%). Этот лимит встроен в петлю как admission
+constraint: поиск обязан раскладывать compute по подстанциям, а финальный план проверяется
+8 реальными AC-PF прогонами.
+
+| вариант | net value | ratio | compliant MW·мес | MW@12 | AC-PF |
+|---|---|---|---|---|---|
+| профильная модель (ICA-style headroom) | **$279.9M** | **4.30×** | 2490.6 | 85.4 | не проверялся |
+| **physics-in-the-loop** | **$155.5M** | **2.39×** | 1313 | 44.7 | **8/8 подстанций clean** |
+
+Дельта **−44.5% net value**: настоящий фидер берёт ~6.5 МВт новой нагрузки, а не 20–60 МВт,
+которые допускали синтетические ёмкости. Это и есть цена реальной физики — и ценность реальных
+ICA-данных утилиты. Команды: `<venv>/python sim/physics_gate.py` (лимит), затем
+`<venv>/python loop/run_physics.py --warm-start results/loop.json --budget 2500` (оптимизация),
+`python3 web/build.py results/loop_physics.json -o web/dashboard_physics.html`.
+
+## RSI: второй раунд (закрывает «один прогон за день»)
+
+Архив сохраняется, поэтому петлю можно продолжить: раунд 2 стартовал с `gen_6` (279.9082) и
+записал `gen_7 … gen_10`. Лучший — **gen_9 = 280.256 (+0.12%)**: политика сошлась, и это честный
+результат (в per-substation exact DP для flex-only улучшать нечего). `gen_10` ухудшился (−1.4) и
+был отвергнут правилом keep-best. Логи: `rsi_agent/rsi_log.json`, `rsi_agent/rsi_log2.json`,
+`rsi_agent/BEST2.md`. Headline остаётся на `gen_6`; раунд 2 — доказательство возобновляемости.
+
+## Регионы как first-class
+
+`web/regions.html` — одна страница со всеми четырьмя операторами (CAL 4.30× · TEX 3.41× ·
+MIDA 4.07× · MIDW 3.88×, violations 0 везде) + карточка physics-in-the-loop со ссылками на
+`dashboard_<REGION>.html`. Сборка: `python3 web/build_regions.py`.
+
 ## Что НЕ говорить
 
 - «real data» без «synthetic site geometry»; «zero violations» без «in the model»;

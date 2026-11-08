@@ -52,6 +52,11 @@ def fmt_musd(v):
 def main():
     loop = load("loop.json")
     pf = load("powerflow.json")
+    try:
+        ph = load("loop_physics.json")
+        rep = load("physics_in_loop.json")
+    except FileNotFoundError:
+        ph, rep = None, None
     c = loop["comparison"]
     b = loop["best"]
     base = loop["baselines"][c["baseline_ref"]]
@@ -185,7 +190,7 @@ code {{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 
       2×25 MVA. Base case converges at min V <b>{pf['base']['min_vm']:.4f} p.u.</b> with 0 violations.
       The feeder has <b>{spar:.1f} MW of spare capacity</b>; our five largest sites need
       <b>{sum(top5):.1f} MW</b> — they cannot share one feeder. This is a <b>siting</b> problem,
-      not a megawatt problem: 0.5–10 MW edge sites are the right unit.</div>
+      not a megawatt problem: 0.5–10 MW edge sites are the right unit.{"<br><b>Inside the loop:</b> with the measured <b>" + f"{rep['gate_limit_mw']:.2f}" + " MW per feeder</b> as a hard admission constraint, the same agent gets <b>" + f"{ph['comparison']['ratio_net_value']:.2f}×</b> instead of " + f"{c['ratio_net_value']:.2f}× (net $" + f"{ph['best']['net_value_musd']:.0f}M vs $" + f"{b['net_value_musd']:.0f}M); all 8 substations pass real AC PF. The delta is the value of real utility ICA data." if ph and rep else ""}</div>
   </div>
 </div>
 

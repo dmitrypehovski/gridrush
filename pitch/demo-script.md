@@ -3,8 +3,8 @@
 **FROZEN.** Numbers from `results/FINAL_NUMBERS.md`, `results/loop.json` and `results/powerflow.json`
 (CAL / CAISO, 2026-11-08). No placeholders left.
 
-Solo speaker. **415 spoken words**, measured per beat below: 2:51 at 145 words per minute, 2:40 at
-155 — with pauses and clicks you land at about 2:55. Do not add words.
+Solo speaker. **418 spoken words**, measured per beat below: 2:52 at 145 words per minute, 2:41 at
+155 — with pauses and clicks you land at about 2:56. Do not add words.
 
 Only this file is read on stage. Everything else is preparation.
 
@@ -123,18 +123,18 @@ here is the recorded run" and switch to the backup video. Do not debug on stage.
 
 ---
 
-### ⏱ 2:30 – 2:55 · HOW IT EXPANDS · 67 words (28 s)
+### ⏱ 2:30 – 2:55 · HOW IT EXPANDS · 70 words (29 s)
 
 **SCREEN:** leave the score curve up. It is your evidence while you talk about the future.
 
-> Three next steps. One: real feeders — PG&E GRIP line sections, five hundred seventy-six hourly
-> values each. Two: real physics — we ran AC power flow on a real twenty-kilovolt feeder:
-> eight megawatts spare, our five biggest sites need thirty-two. So this is a siting problem, not a
-> megawatt problem. Next: inside the loop. Three: real signal — OpenADR and hourly prices. Same
-> loop, four regions already.
+> Next steps. One: real feeders — PG&E GRIP line sections, five hundred seventy-six values each.
+> Two: real physics. We ran AC power flow on a twenty-kilovolt feeder: six and a half megawatts
+> spare, our five biggest sites need thirty-two. Then that physics goes inside the loop — two point four times
+> instead of four point three. That gap is the value of real utility data, exactly what we ask for.
 
-**CUES:** count on your fingers: one, two, three. "Siting problem, not a megawatt problem" is your
-best line of the last minute — slow down for it.
+**CUES:** count on your fingers: one, two. Slow down on "two point four instead of four point
+three" — that is the honest cost of real physics, and the strongest thing you say in the last
+minute. Do not apologise for it; sell it.
 
 ---
 
@@ -211,12 +211,15 @@ Source: `results/FINAL_NUMBERS.md`, `results/loop.json`, `results/powerflow.json
 | SLA mix | **16× 99.99%, 6× 99.9%, 10× 99%** | `best.sites[].sla` |
 | Curtailment at 18:00 | naive **28.4 MW**, agent **1.0 MW** | `grid.stress_day.curtail_mw_naive` / `curtail_mw` |
 | Curtailment at 20:00 (peak 43,860 MW) | naive **18.2 MW**, agent **0.0 MW** | same |
-| AC power flow | base min V **0.9756 p.u.**; feeder fits **8.2 MW** of our load class (min V **0.9635 p.u.**, 0 violations); five biggest sites **31.8 MW** → **71 violations** | `results/powerflow.json` |
+| AC power flow (validation) | base min V **0.9756 p.u.**; feeder fits **8.2 MW** of our load class (min V **0.9635 p.u.**, 0 violations); five biggest sites **31.8 MW** → **71 violations** | `results/powerflow.json` |
+| AC admission limit | **6.53 MW** per 20 kV feeder — first violation at **7.03 MW** (min V 0.95785 p.u. at 100% loading) | `results/physics_gate.json`, `sim/physics_gate.py` |
+| **Physics in the loop** | **2.39×, $155.5M, 1313 MW·months, 44.7 MW@12, 29 sites, 8/8 substations AC-PF clean** | `results/loop_physics.json`, `loop/run_physics.py` |
+| Cost of real physics | **−44.5% net value** versus the profile model (6.5 MW per real feeder, not the 20–60 MW synthetic ceilings allowed) | `results/FINAL_NUMBERS.md` |
 | Stress day | **2025-08-21** | `grid.stress_day` |
 | Repository | **attached as `gridrush.zip`** (offline; no keys; every baseline, every region, every iteration in `results/loop.json`) | — |
 
-> One sentence on stage already carries the AC result ("eight megawatts spare, five biggest sites
-> need thirty-two"). Everything else above is Q&A ammunition only — do not recite the table.
+> One sentence on stage already carries the AC result ("six and a half megawatts spare, five biggest
+> sites need thirty-two"). Everything else above is Q&A ammunition only — do not recite the table.
 
 ---
 

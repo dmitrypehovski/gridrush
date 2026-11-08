@@ -89,10 +89,28 @@ so we do not use it for capacity or stress calculations — that is written down
 > (71 violations, voltage collapse), which is exactly why the agent distributes across 8 substations
 > and sizes each site to local headroom. Same loop, real physics: it confirms that 0.5–10 MW edge
 > sites are the right unit.
+>
+> And it is not just a check: the measured admission limit (six point five megawatts per feeder) is a
+> hard constraint inside the optimizer (`loop/run_physics.py`), and the final plan is verified with
+> eight real AC-PF runs — all clean. With real physics the same agent gets 2.39× instead of 4.30×;
+> that delta is the value of real ICA data. On stage we quote the conservative limit we enforce:
+> six and a half.
 
 **Если спросят «так нарушения могут быть на самом деле?»:** «On line thermal limits and voltages —
 that is exactly what the AC validation adds: it says a single feeder cannot host the portfolio, and
 the plan already spreads across eight substations. On the capacity limits we model, no.»
+**Если `physics.html` не готов:** первые два предложения всё равно верны; скажите «results are in
+the repo» и не называйте цифры по памяти.
+**Цифры под рукой (если дожмут):** physics-in-the-loop = 2.39×, $155.5M, 1313 продаваемых
+MW·месяцев, 44.7 МВт@12, 29 сайтов, 8/8 подстанций AC-PF clean; admission limit **6.53 МВт** на
+фидер (первое нарушение 7.03 МВт, min V 0.95785 p.u. при 100% загрузке); дельта к профильной модели
+**−44.5%** net value. Это `results/loop_physics.json` + `results/physics_gate.json`.
+**Как объяснять разницу 8.2 и 6.53 (не защищаться, а объяснять):** 8.2 MW — это первая проверка
+(топ-5 портфель, равномерное масштабирование), она показала порядок величины. 6.53 MW — консервативный
+admission limit, который теперь **enforce-ится в оптимизаторе** (распределение по пяти лучшим шинам
+пропорционально headroom; первое нарушение на 7.03 MW). **На сцене одно число — 6.5.** Если спросят:
+«Eight point two was the first sweep; six point five is the conservative limit we actually enforce —
+the difference is one is a measurement, the other is a constraint.» И сразу к 2.39×.
 **Если `physics.html` не готов:** первые два предложения всё равно верны; скажите «results are in
 the repo» и не называйте цифры по памяти.
 

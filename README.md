@@ -75,7 +75,10 @@ proposer → portfolio → simulator (hour-by-hour) → score → keep if better
 - `loop/local_search.py` — second proposer: per-site proposals (mode × MW × SLA × battery) scored by
   the full-year simulator; only SLA-clean improvements are accepted;
 - `rsi_agent/` — the same loop with an **LLM proposer**: the agent writes new policy code
-  (`gen_0.py` … `gen_6.py`), the simulator scores it, the best is kept (`rsi_log.json`, `BEST.md`).
+  (`gen_0.py` … `gen_10.py`), the simulator scores it, the best is kept (`rsi_log.json`, `BEST.md`).
+  The archive survives between rounds: round 2 resumed from `gen_6` and produced four more
+  generations (`rsi_log2.json`, `BEST2.md`) — it converged at **+0.12%**, which is the honest finding
+  (exact per-substation DP leaves little room), and one generation regressed and was rejected.
   This is where the result came from: the fast search plateaus at **179** (score), then the LLM agent
   rewrites the policy — an exact per-substation DP — and jumps to **279.9**, beating even a
   hand-written greedy reference ($250M). 7 generations, 1 of them a recorded failure (returned an
@@ -84,6 +87,8 @@ proposer → portfolio → simulator (hour-by-hour) → score → keep if better
   site's SLA holds; without this step the plan is optimistic and part of the MW is unsellable.
 
 ### The same policy on four operators (no per-region tuning)
+
+Open `web/regions.html` for all four with links to their dashboards.
 
 | Region | 2025 peak | Net value ratio | Compliant MW·months ratio | Violations |
 |---|---|---|---|---|
@@ -100,8 +105,16 @@ a **real AC power flow** (pandapower `mv_oberrhein`: a real 20 kV German MV feed
 2×25 MVA). Base case converges at min V 0.9756 p.u.; the feeder has **8.2 MW of spare capacity** with
 0 violations, while our five largest sites need **31.8 MW** — they do not fit on one feeder (71
 violations, voltage collapse). That is exactly why this is a *siting* problem: 0.5–10 MW edge sites
-are the right unit, and the agent has to distribute them. `web/physics.html` shows every number from
-a measured run.
+are the right unit, and the agent has to distribute them. `web/physics.html` shows every number from a measured run.
+
+**Physics in the loop.** The measured admission limit — **6.53 MW of new load per MV feeder**
+(first violation at 7.03 MW) — is not just a check: it is passed into the portfolio builder
+itself (`build_portfolio(..., sub_limit_mw=...)`, driven by `sim/physics_gate.py` →
+`loop/run_physics.py`), so the policy physically cannot over-subscribe a feeder; the final plan is
+then verified with eight real AC-PF runs. With real physics inside the loop the same agent reaches
+**2.39× instead of 4.30×** (net $155.5M): a real feeder takes ~6.5 MW, not the 20–60 MW the
+synthetic capacities assumed. Both numbers are reported — the delta is the value of real utility
+ICA data. See `results/FINAL_NUMBERS.md`.
 
 ## What is real and what is synthetic
 
@@ -144,7 +157,7 @@ Dev/mock mode without the simulator: `python3 loop/run.py --mock --iters 120`.
 | `loop/` | RSI loop: `policy.py` (parameterized policy + self-repair), `search.py` (mutator), `local_search.py` (per-site proposer), `run.py` (CLI → `results/loop.json`) |
 | `results/FINAL_NUMBERS.md` | the frozen numbers every pitch artifact references |
 | `rsi_agent/` | LLM-in-the-loop generations: `eval.py`, `gen_*.py`, `rsi_log.json`, `BEST.md` |
-| `web/` | `dashboard.html` — one self-contained offline file (loop replay, portfolio map, stress day, strategy comparison); `live_server.py` — live run streamed to the browser (`python3 web/live_server.py`, ~12 s) |
+| `web/` | `dashboard.html` — one self-contained offline file (loop replay, portfolio map, stress day, strategy comparison); `regions.html` — four operators + physics variant; `dashboard_physics.html` — physics-in-the-loop run; `live_server.py` — live run streamed to the browser (`python3 web/live_server.py`, ~11 s) |
 | `pitch/one-pager.html` + `GRIDRUSH-one-pager.pdf` | one-page leave-behind for judges, generated from the frozen JSON by `build_onepager.py` |
 | `pitch/` | `submission.md`, `demo-script.md` (3 min, timed), `qa-defense.md`, `hooks.md` |
 | `data/` | EIA-930 hourly 2025 starter dataset (public domain) |

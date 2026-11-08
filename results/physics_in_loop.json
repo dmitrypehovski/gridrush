@@ -1,0 +1,121 @@
+{
+ "generated_at": "2026-11-09T05:17:51",
+ "region": "CAL",
+ "feeder": "mv_oberrhein",
+ "gate_limit_mw": 6.532,
+ "buses": [
+  73,
+  80,
+  119,
+  118,
+  223
+ ],
+ "per_bus_headroom_mw": [
+  6.6,
+  6.55,
+  6.54,
+  6.01,
+  3.47
+ ],
+ "substation_verdicts": [
+  {
+   "substation": "S01",
+   "load_mw": 4.11,
+   "clean": true,
+   "converged": true,
+   "min_vm_pu": 0.96471,
+   "max_loading_pct": 89.06,
+   "n_violations": 0
+  },
+  {
+   "substation": "S02",
+   "load_mw": 6.44,
+   "clean": true,
+   "converged": true,
+   "min_vm_pu": 0.95812,
+   "max_loading_pct": 99.58,
+   "n_violations": 0
+  },
+  {
+   "substation": "S03",
+   "load_mw": 6.28,
+   "clean": true,
+   "converged": true,
+   "min_vm_pu": 0.95858,
+   "max_loading_pct": 98.85,
+   "n_violations": 0
+  },
+  {
+   "substation": "S04",
+   "load_mw": 6.5,
+   "clean": true,
+   "converged": true,
+   "min_vm_pu": 0.95794,
+   "max_loading_pct": 99.86,
+   "n_violations": 0
+  },
+  {
+   "substation": "S05",
+   "load_mw": 6.5,
+   "clean": true,
+   "converged": true,
+   "min_vm_pu": 0.95794,
+   "max_loading_pct": 99.86,
+   "n_violations": 0
+  },
+  {
+   "substation": "S06",
+   "load_mw": 6.5,
+   "clean": true,
+   "converged": true,
+   "min_vm_pu": 0.95794,
+   "max_loading_pct": 99.86,
+   "n_violations": 0
+  },
+  {
+   "substation": "S07",
+   "load_mw": 6.49,
+   "clean": true,
+   "converged": true,
+   "min_vm_pu": 0.95797,
+   "max_loading_pct": 99.81,
+   "n_violations": 0
+  },
+  {
+   "substation": "S08",
+   "load_mw": 1.89,
+   "clean": true,
+   "converged": true,
+   "min_vm_pu": 0.97071,
+   "max_loading_pct": 85.5,
+   "n_violations": 0
+  }
+ ],
+ "all_clean": true,
+ "max_substation_load_mw": 6.5,
+ "sites_energized": 29,
+ "delta_vs_profile_only": {
+  "profile_only": {
+   "net_value_musd": 279.908,
+   "compliant_mwmonths": 2490.58,
+   "mw_at_month12": 85.39,
+   "ratio_net_value": 4.3
+  },
+  "physics_in_loop": {
+   "net_value_musd": 155.456,
+   "compliant_mwmonths": 1313.03,
+   "mw_at_month12": 44.71,
+   "ratio_net_value": 2.39
+  },
+  "delta_pct": {
+   "net_value": -44.5,
+   "compliant_mwmonths": -47.3
+  }
+ },
+ "timing_s": 11.42,
+ "caveats": [
+  "one real feeder; the 8 synthetic substations of the hackathon model are treated as 8 independent MV feeders of this class, each with the measured limit",
+  "limit is total added load spread over the 5 best-headroom buses in proportion to their headroom; a different bus mix gives a slightly different number",
+  "reported for the hackathon demo, not a connection study"
+ ]
+}

@@ -19,15 +19,16 @@ import numpy as np
 from .policy import D, build_portfolio
 
 
-def evaluate_params(curves, evaluate_fn, params) -> dict:
-    portfolio = build_portfolio(curves, params)
+def evaluate_params(curves, evaluate_fn, params, sub_limit_mw=None) -> dict:
+    portfolio = build_portfolio(curves, params, sub_limit_mw=sub_limit_mw)
     res = evaluate_fn(portfolio)
     res["portfolio"] = portfolio
     return res
 
 
 def hill_climb(curves, evaluate_fn, n_iter: int = 220, seed: int = 0,
-               init=None, verbose: bool = True, on_iter=None) -> dict:
+               init=None, verbose: bool = True, on_iter=None,
+               sub_limit_mw=None) -> dict:
     """Простой (1+λ) hill-climbing с адаптивным шагом и рестартом.
 
     Возвращает {"best_params","best","iterations","history","n_evals","wall_s"}.
@@ -36,7 +37,7 @@ def hill_climb(curves, evaluate_fn, n_iter: int = 220, seed: int = 0,
     t0 = time.time()
 
     def ev(x):
-        return evaluate_params(curves, evaluate_fn, x)
+        return evaluate_params(curves, evaluate_fn, x, sub_limit_mw=sub_limit_mw)
 
     if init is None:
         # агент стартует «незнающим»: случайная точка пространства политик.
@@ -103,7 +104,7 @@ def hill_climb(curves, evaluate_fn, n_iter: int = 220, seed: int = 0,
         "best_params": best_params_list(best_x),
         "best_params_vector": [round(float(v), 5) for v in best_x],
         "best": best,
-        "best_portfolio": cur_portfolio_at(curves, evaluate_fn, best_x),
+        "best_portfolio": build_portfolio(curves, best_x, sub_limit_mw=sub_limit_mw),
         "iterations": iterations,
         "history": history,
         "n_evals": n_iter + 1 + restarts[0],

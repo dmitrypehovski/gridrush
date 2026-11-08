@@ -1,0 +1,224 @@
+{
+ "feeder": "mv_oberrhein",
+ "feeder_note": "real 20 kV German MV network shipped with pandapower; 179 buses, 181 lines, 2 x 25 MVA 110/20 kV transformers, served load 37.1 MW",
+ "buses": [
+  73,
+  80,
+  119,
+  118,
+  223
+ ],
+ "per_bus_headroom_mw": [
+  6.6,
+  6.55,
+  6.54,
+  6.01,
+  3.47
+ ],
+ "loads_at_limit_mw": [
+  1.4779,
+  1.4667,
+  1.4645,
+  1.3458,
+  0.777
+ ],
+ "limit_total_mw": 6.532,
+ "clean_by_total": [
+  {
+   "total_mw": 4.0,
+   "clean": true,
+   "min_vm": 0.96501,
+   "max_loading_pct": 88.56,
+   "n_violations": 0
+  },
+  {
+   "total_mw": 4.5,
+   "clean": true,
+   "min_vm": 0.96362,
+   "max_loading_pct": 90.81,
+   "n_violations": 0
+  },
+  {
+   "total_mw": 5.0,
+   "clean": true,
+   "min_vm": 0.96222,
+   "max_loading_pct": 93.06,
+   "n_violations": 0
+  },
+  {
+   "total_mw": 5.5,
+   "clean": true,
+   "min_vm": 0.96081,
+   "max_loading_pct": 95.32,
+   "n_violations": 0
+  },
+  {
+   "total_mw": 6.0,
+   "clean": true,
+   "min_vm": 0.95938,
+   "max_loading_pct": 97.58,
+   "n_violations": 0
+  },
+  {
+   "total_mw": 6.5,
+   "clean": true,
+   "min_vm": 0.95794,
+   "max_loading_pct": 99.86,
+   "n_violations": 0
+  },
+  {
+   "total_mw": 7.0,
+   "clean": false,
+   "min_vm": 0.95649,
+   "max_loading_pct": 102.14,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 7.5,
+   "clean": false,
+   "min_vm": 0.95502,
+   "max_loading_pct": 104.43,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 8.0,
+   "clean": false,
+   "min_vm": 0.95353,
+   "max_loading_pct": 106.72,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 8.5,
+   "clean": false,
+   "min_vm": 0.95203,
+   "max_loading_pct": 109.03,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 9.0,
+   "clean": false,
+   "min_vm": 0.95051,
+   "max_loading_pct": 111.34,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 9.5,
+   "clean": false,
+   "min_vm": 0.94898,
+   "max_loading_pct": 113.67,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 10.0,
+   "clean": false,
+   "min_vm": 0.94743,
+   "max_loading_pct": 116.0,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 10.5,
+   "clean": false,
+   "min_vm": 0.94576,
+   "max_loading_pct": 118.34,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 11.0,
+   "clean": false,
+   "min_vm": 0.94397,
+   "max_loading_pct": 120.69,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 11.5,
+   "clean": false,
+   "min_vm": 0.94216,
+   "max_loading_pct": 123.05,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 12.0,
+   "clean": false,
+   "min_vm": 0.94034,
+   "max_loading_pct": 125.42,
+   "n_violations": 1
+  },
+  {
+   "total_mw": 12.5,
+   "clean": false,
+   "min_vm": 0.93849,
+   "max_loading_pct": 127.8,
+   "n_violations": 12
+  },
+  {
+   "total_mw": 13.0,
+   "clean": false,
+   "min_vm": 0.93663,
+   "max_loading_pct": 130.19,
+   "n_violations": 13
+  },
+  {
+   "total_mw": 13.5,
+   "clean": false,
+   "min_vm": 0.93475,
+   "max_loading_pct": 132.59,
+   "n_violations": 19
+  },
+  {
+   "total_mw": 14.0,
+   "clean": false,
+   "min_vm": 0.93285,
+   "max_loading_pct": 135.0,
+   "n_violations": 23
+  },
+  {
+   "total_mw": 14.5,
+   "clean": false,
+   "min_vm": 0.93093,
+   "max_loading_pct": 137.42,
+   "n_violations": 26
+  },
+  {
+   "total_mw": 15.0,
+   "clean": false,
+   "min_vm": 0.92899,
+   "max_loading_pct": 139.85,
+   "n_violations": 28
+  },
+  {
+   "total_mw": 15.5,
+   "clean": false,
+   "min_vm": 0.92704,
+   "max_loading_pct": 142.29,
+   "n_violations": 30
+  },
+  {
+   "total_mw": 16.0,
+   "clean": false,
+   "min_vm": 0.92506,
+   "max_loading_pct": 144.74,
+   "n_violations": 36
+  }
+ ],
+ "metrics_at_limit": {
+  "converged": true,
+  "min_vm_pu": 0.95785,
+  "max_loading_pct": 100.0,
+  "n_violations": 1
+ },
+ "first_violation": {
+  "total_mw": 7.03,
+  "n_violations": 1,
+  "max_loading_pct": 102.27,
+  "min_vm_pu": 0.9564
+ },
+ "violation_definition": "bus |V| outside 0.94-1.06 p.u. or any line/transformer loading above 100 % of rating; new loads cos(phi)=0.98",
+ "timing_s": {
+  "total": 6.07
+ },
+ "caveats": [
+  "one real feeder; the 8 synthetic substations of the hackathon model are treated as 8 independent MV feeders of this class, each with the measured limit",
+  "limit is total added load spread over the 5 best-headroom buses in proportion to their headroom; a different bus mix gives a slightly different number",
+  "reported for the hackathon demo, not a connection study"
+ ]
+}

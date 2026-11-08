@@ -46,15 +46,17 @@ margin over 36 months) and all non-firm (172.6 MW at month 12, but −$449.5M af
 breach) — GRIDRUSH delivers **85.4 MW at month 12, +$279.9M of margin, 4.30× the net value, 3.82×
 more compliant megawatt-months (651 → 2491), zero modelled violations, zero SLA breach**. It
 connects 32 of 40 sites and refuses the other 8. At the evening peak the naive portfolio must shed
-28.4 MW; GRIDRUSH sheds at most 1.0 MW. The same policy, with no per-region tuning, gives
-**3.4–4.3× and zero violations on CAISO, ERCOT, PJM and MISO 2025 data**.
+28.4 MW; GRIDRUSH sheds at most 1.0 MW. Same policy on CAISO/ERCOT/PJM/MISO: **4.30× / 3.41× /
+4.07× / 3.88×** — 3.4–4.3×, zero violations, no tuning (`web/regions.html`).
 
 ## 8. How it expands
 
 Real feeders (PG&E GRIP, SCE ICA) instead of synthetic ones; real physics — AC power flow
 (`pandapower`) on a real 20 kV feeder already shows 8.2 MW of spare capacity for our load class with
-zero violations, against 32 MW for our five largest sites, so the next step is that physics inside
-the loop; real signal (OpenADR, prices, carbon).
+zero violations, against 32 MW for our five largest sites. We already feed that limit back into the
+loop: with measured physics inside the optimizer the same agent reaches **2.39× (net $155.5M, 1313
+sellable MW·months, all 8 substations AC-PF clean) instead of 4.30×** — the delta is exactly the data
+we ask for. Next: real feeder data per substation, and real signal (OpenADR, prices, carbon).
 
 ## 9. Repository
 

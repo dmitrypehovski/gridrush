@@ -96,8 +96,15 @@ def _flex_option(R_sorted: np.ndarray, target: float, par: dict, sla_level: tupl
             "k_hours": k_hours, "rev_mult": rev_mult}
 
 
-def build_portfolio(curves: dict, params: np.ndarray | dict) -> list[dict]:
-    """Строит портфель жадно по подстанциям с общим остатком headroom."""
+def build_portfolio(curves: dict, params: np.ndarray | dict,
+                    sub_limit_mw: float | None = None) -> list[dict]:
+    """Строит портфель жадно по подстанциям с общим остатком headroom.
+
+    `sub_limit_mw` — необязательный жёсткий лимит суммарной НОВОЙ нагрузки на подстанцию.
+    Если задан, конструктор никогда его не превышает, поэтому физическое ограничение
+    (например, измеренный AC power-flow лимит фидера) действует внутри политики, а не
+    наказывается постфактум. По умолчанию None — поведение прежнее.
+    """
     par = decode(params) if not isinstance(params, dict) else params
     n = len(curves["ids"])
     sub_idx = np.asarray(curves["sub_idx"])
@@ -122,6 +129,7 @@ def build_portfolio(curves: dict, params: np.ndarray | dict) -> list[dict]:
 
     order = sorted(range(n), key=lambda i: (sub_rank[int(sub_idx[i])], -_site_priority(curves, i, par)))
     remaining = {int(s): sub_heads[int(s)].copy() for s in subs}
+    alloc_total = {int(s): 0.0 for s in subs}
 
     for i in order:
         s = int(sub_idx[i])
@@ -129,6 +137,9 @@ def build_portfolio(curves: dict, params: np.ndarray | dict) -> list[dict]:
         if np.max(R) < min_mw:
             continue
         target = float(max_mw[i]) * target_frac
+        if sub_limit_mw is not None:
+            room = float(sub_limit_mw) - alloc_total[s]
+            target = min(target, max(0.0, room))
         if target < min_mw:
             continue
         R_sorted = np.sort(R)
@@ -192,6 +203,7 @@ def build_portfolio(curves: dict, params: np.ndarray | dict) -> list[dict]:
 
         portfolio[i] = {"site_id": curves["ids"][i], "mode": mode, "mw": float(np.floor(mw * 100.0) / 100.0),
                         "sla": float(sla), "battery_mwh": round(float(bmwh), 2)}
+        alloc_total[s] += portfolio[i]["mw"]
         if mode == "firm":
             remaining[s] = np.maximum(0.0, R - portfolio[i]["mw"])
         else:  # flex/battery: в стресс-часы забирают всё, что есть

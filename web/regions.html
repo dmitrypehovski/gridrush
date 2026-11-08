@@ -29,6 +29,9 @@ h2{font-size:11px;letter-spacing:1.6px;color:var(--dim);text-transform:uppercase
 .phys-wrap{margin-top:16px}
 .card.physics{border-color:#1d4b5f;background:linear-gradient(180deg,rgba(34,211,238,.07),rgba(15,24,35,1))}
 .card.physics .code{background:var(--cyan)}
+.card.realdata{border-color:#4b3f1d;background:linear-gradient(180deg,rgba(245,165,36,.07),rgba(15,24,35,1))}
+.card.realdata .code{background:var(--amber)}
+.card.realdata .grid2{grid-template-columns:repeat(4,1fr);margin-top:6px}
 .card.physics .grid2{grid-template-columns:repeat(4,1fr);margin-top:6px}
 .note{font-size:11px;color:#b9c7da;line-height:1.45;margin-top:2px}
 footer{margin-top:20px;border-top:1px solid var(--line);padding-top:10px;font-size:10px;color:var(--dim);
@@ -90,7 +93,7 @@ footer{margin-top:20px;border-top:1px solid var(--line);padding-top:10px;font-si
     </div>
     <div class="open">open dashboard →</div>
   </a></div>
-<h2>reality check: measured AC power flow inside the loop</h2>
+<<h2>reality check: measured AC power flow inside the loop</h2>
 <div class="phys-wrap">
   <a class="card physics" href="dashboard_physics.html">
     <div class="row"><span class="code">AC PF</span><span class="name">physics-in-the-loop (CAL)</span>
@@ -109,6 +112,27 @@ footer{margin-top:20px;border-top:1px solid var(--line);padding-top:10px;font-si
       Both numbers are reported; the delta is the value of real utility ICA data.</div>
     <div class="open">open physics dashboard →</div>
   </a></div>
-<footer><span>numbers from results/loop_*.json, results/loop_physics.json, results/physics_in_loop.json</span>
+<h2>reality check: real PG&amp;E substations instead of synthetic ones</h2>
+<div class="phys-wrap">
+  <a class="card realdata" href="dashboard_real.html">
+    <div class="row"><span class="code">REAL</span><span class="name">PG&amp;E GRIP substations (CAL)</span>
+      <span class="peak">8 real substations · 1,620 MW rating · 1,081 MW 2026 load</span></div>
+    <div class="big">1.22×</div>
+    <div class="lbl">net value vs best honest plan — the same agent on real utility data</div>
+    <div class="grid2">
+      <div><b>397.7</b><span>MW at month 12</span></div>
+      <div><b>11,533</b><span>sellable MW·months</span></div>
+      <div><b>40</b><span>of 40 sites energized</span></div>
+      <div><b>0.0</b><span>MWh grid violations</span></div>
+    </div>
+    <div class="note">Real: substation identity, coordinates, facility rating and 2026 loading
+      (PG&amp;E GRIP Data Portal, public). The premium collapses to 1.22× because at the
+      <b>substation aggregate</b> level these substations are large and not the bottleneck — which is exactly
+      where PG&amp;E's own Grid Needs Assessment points: in a sample of 2,000 circuits,
+      <b>124 are already short</b> for 2026 (up to 12.4 MW).
+      The constraint is per-circuit, not per-substation — that is the next data we need.</div>
+    <div class="open">open real-data dashboard →</div>
+  </a></div>
+<footer><span>numbers from results/loop_*.json, results/loop_physics.json, results/physics_in_loop.json, results/loop_real.json (+ data/sites_CAL_real.json, results/pge_gna_sample.json)</span>
   <span>offline · no keys · single-file dashboards</span></footer>
 </body></html>

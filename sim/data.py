@@ -173,6 +173,19 @@ def make_sites(region: str, n_substations: int = 8, per_substation: int = 5,
     band [LF_RANGE.lo, min(LF_RANGE.hi, (1-margin)/u_max)] so the existing load
     never breaches the substation limit on its own.
     """
+    # Real-data override: data/sites_<region>_real.json is built from PG&E's public GRIP
+    # portal by sim/real_sites.py (real substations, ratings, 2026 loadings, coordinates).
+    # Enable with GRIDRUSH_SITES=real; the schema matches exactly what this function returns.
+    import os as _os
+    if _os.environ.get("GRIDRUSH_SITES") == "real":
+        real_path = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+                                  "data", f"sites_{region}_real.json")
+        if _os.path.exists(real_path):
+            import json as _json
+            with open(real_path, encoding="utf-8") as _f:
+                _d = _json.load(_f)
+            return _d["sites"]
+
     reg = load_region(region)
     lf_lo, lf_hi = reg["lf_range"]
     bbox = reg["bbox"]

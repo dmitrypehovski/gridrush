@@ -148,6 +148,21 @@ Live-run — отдельная опция «покажи, что оно пра�
   --warm-start results/loop.json --budget 2500` → `python3 web/build.py results/loop_physics.json
   -o web/dashboard_physics.html`; `python3 web/build_regions.py`.
 
+## 7.57 Реальные данные PG&E (для Q&A «а это не всё синтетика?»)
+
+- `sim/real_sites.py` — тянет публичный **PG&E GRIP Data Portal** (ArcGIS REST, без ключа):
+  8 реальных подстанций с реальными координатами, facility rating и загрузкой 2026
+  (SAN RAMON 302/137 МВт, CLAYTON 193/125, STOCKDALE 327/275 и т.д.).
+- Запуск на них: `GRIDRUSH_SITES=real python3 loop/run.py --region CAL --iters 80 --seeds 1
+  --policy-file rsi_agent/gen_6.py --out results/loop_real.json`, затем
+  `python3 web/build.py results/loop_real.json -o web/dashboard_real.html`.
+- Результат: **1.22×, 397.7 МВт@12, 11 533 MW·мес, 0 нарушений**. Честный вывод: на агрегатном
+  уровне подстанции реальные PG&E крупные и не узкое место; ограничение на уровне фидера —
+  в выборке 2 000 цепей GNA **124 цепи (6.2%) уже дефицитны на 2026** (до 12.4 МВт).
+  Это и есть ask: circuit-level ICA.
+- Смотреть: `web/regions.html` (третий блок) и `web/dashboard_real.html`; скриншот
+  `web/qa_real_dashboard.png`.
+
 ## 7.6 One-pager для судей
 
 `pitch/GRIDRUSH-one-pager.pdf` — одна страница A4 landscape: три стратегии, KPI, кривая обучения,

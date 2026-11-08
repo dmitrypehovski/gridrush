@@ -84,6 +84,55 @@ def main():
     <div class="open">open physics dashboard →</div>
   </a>"""
 
+    # ---- real PG&E data card -------------------------------------------------
+    real = load("loop_real.json")
+    real_card = ""
+    if real:
+        sites_meta = {}
+        sp = os.path.join(ROOT, "data", "sites_CAL_real.json")
+        if os.path.exists(sp):
+            with open(sp, encoding="utf-8") as f:
+                sites_meta = json.load(f)
+        subs = sites_meta.get("substations", [])
+        gna = None
+        gp = os.path.join(ROOT, "results", "pge_gna_sample.json")
+        if os.path.exists(gp):
+            with open(gp, encoding="utf-8") as f:
+                feats = json.load(f).get("features", [])
+            vals = []
+            for x in feats:
+                try:
+                    vals.append(float(x["attributes"].get("deficiencymw2026")))
+                except (TypeError, ValueError):
+                    pass
+            pos = [v for v in vals if v > 0]
+            gna = {"n": len(vals), "n_pos": len(pos), "sum_mw": round(sum(pos), 1),
+                   "max_mw": round(max(pos), 1) if pos else 0.0}
+        c = real["comparison"]
+        rating = sum(s.get("rating_mw", 0) for s in subs)
+        load_mw = sum(s.get("load_mw", 0) for s in subs)
+        real_card = f"""
+  <a class="card realdata" href="dashboard_real.html">
+    <div class="row"><span class="code">REAL</span><span class="name">PG&amp;E GRIP substations (CAL)</span>
+      <span class="peak">{len(subs)} real substations · {rating:,.0f} MW rating · {load_mw:,.0f} MW 2026 load</span></div>
+    <div class="big">{c['ratio_net_value']:.2f}×</div>
+    <div class="lbl">net value vs best honest plan — the same agent on real utility data</div>
+    <div class="grid2">
+      <div><b>{real['best']['mw_at_month12']:.1f}</b><span>MW at month 12</span></div>
+      <div><b>{real['best']['compliant_mwmonths']:,.0f}</b><span>sellable MW·months</span></div>
+      <div><b>{len(real['best']['sites'])}</b><span>of {len(real['sites'])} sites energized</span></div>
+      <div><b>{c['violations'].split()[0]}</b><span>MWh grid violations</span></div>
+    </div>
+    <div class="note">Real: substation identity, coordinates, facility rating and 2026 loading
+      (PG&amp;E GRIP Data Portal, public). The premium collapses to {c['ratio_net_value']:.2f}× because at the
+      <b>substation aggregate</b> level these substations are large and not the bottleneck — which is exactly
+      where PG&amp;E's own Grid Needs Assessment points: in a sample of {gna['n'] if gna else 2000:,} circuits,
+      <b>{gna['n_pos'] if gna else 124} are already short</b> for 2026 (up to {gna['max_mw'] if gna else 12.4} MW).
+      The constraint is per-circuit, not per-substation — that is the next data we need.</div>
+    <div class="open">open real-data dashboard →</div>
+  </a>"""
+        cards.append("")
+
     html = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>GRIDRUSH — all regions</title>
 <style>
@@ -115,6 +164,9 @@ h2{{font-size:11px;letter-spacing:1.6px;color:var(--dim);text-transform:uppercas
 .phys-wrap{{margin-top:16px}}
 .card.physics{{border-color:#1d4b5f;background:linear-gradient(180deg,rgba(34,211,238,.07),rgba(15,24,35,1))}}
 .card.physics .code{{background:var(--cyan)}}
+.card.realdata{{border-color:#4b3f1d;background:linear-gradient(180deg,rgba(245,165,36,.07),rgba(15,24,35,1))}}
+.card.realdata .code{{background:var(--amber)}}
+.card.realdata .grid2{{grid-template-columns:repeat(4,1fr);margin-top:6px}}
 .card.physics .grid2{{grid-template-columns:repeat(4,1fr);margin-top:6px}}
 .note{{font-size:11px;color:#b9c7da;line-height:1.45;margin-top:2px}}
 footer{{margin-top:20px;border-top:1px solid var(--line);padding-top:10px;font-size:10px;color:var(--dim);
@@ -124,9 +176,11 @@ footer{{margin-top:20px;border-top:1px solid var(--line);padding-top:10px;font-s
   <div class="sub">one policy, four operators, no per-region tuning — and what real power flow does to it</div></header>
 <h2>2025 hourly replay, same agent policy</h2>
 <div class="cards">{''.join(cards)}</div>
-<h2>reality check: measured AC power flow inside the loop</h2>
+<<h2>reality check: measured AC power flow inside the loop</h2>
 <div class="phys-wrap">{physics or ''}</div>
-<footer><span>numbers from results/loop_*.json, results/loop_physics.json, results/physics_in_loop.json</span>
+<h2>reality check: real PG&amp;E substations instead of synthetic ones</h2>
+<div class="phys-wrap">{real_card or ''}</div>
+<footer><span>numbers from results/loop_*.json, results/loop_physics.json, results/physics_in_loop.json, results/loop_real.json (+ data/sites_CAL_real.json, results/pge_gna_sample.json)</span>
   <span>offline · no keys · single-file dashboards</span></footer>
 </body></html>"""
     out = os.path.join(HERE, "regions.html")

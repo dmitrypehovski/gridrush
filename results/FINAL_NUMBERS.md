@@ -76,6 +76,32 @@ ICA-данных утилиты. Команды: `<venv>/python sim/physics_gate
 `<venv>/python loop/run_physics.py --warm-start results/loop.json --budget 2500` (оптимизация),
 `python3 web/build.py results/loop_physics.json -o web/dashboard_physics.html`.
 
+## Реальные данные PG&E вместо синтетических ёмкостей
+
+`sim/real_sites.py` тянет публичный PG&E GRIP Data Portal (ArcGIS REST, без ключа):
+8 реальных подстанций PG&E — реальные имена, координаты, суммарный facility rating и
+**загрузка 2026** (слой DFCircuitsView), отсортированы по реальному запасу:
+
+| подстанция | дивизион | rating | load 2026 | lf |
+|---|---|---|---|---|
+| SAN RAMON | Mission | 302.2 MW | 136.9 MW | 0.453 |
+| CLAYTON | Diablo | 193.1 | 124.9 | 0.647 |
+| CAMP EVERS | Central Coast | 100.4 | 38.5 | 0.383 |
+| TASSAJARA | Diablo | 184.2 | 130.2 | 0.707 |
+| STOCKDALE | Kern | 327.1 | 275.2 | 0.841 |
+| WOODWARD | Fresno | 174.6 | 124.5 | 0.713 |
+| FIGARDEN | Fresno | 225.4 | 180.2 | 0.799 |
+| COTTLE | Yosemite | 112.9 | 70.5 | 0.624 |
+
+Запуск: `python3 sim/real_sites.py` → `GRIDRUSH_SITES=real python3 loop/run.py --region CAL ...`
+→ `results/loop_real.json` → `web/dashboard_real.html`.
+
+**Результат: 1.22×, 397.7 MW@12, 11 533 MW·мес, 0 нарушений, все 40 сайтов.**
+Честный вывод: на **агрегатном уровне подстанции** реальные PG&E-подстанции крупные и не являются
+узким местом — премия за гибкость почти исчезает. Ограничение живёт на уровне фидера: в выборке
+2 000 цепей PG&E GNA **124 цепи (6.2%) уже дефицитны на 2026** (до 12.4 МВт). Это ровно тот
+следующий шаг, который заявлен в ask.
+
 ## RSI: второй раунд (закрывает «один прогон за день»)
 
 Архив сохраняется, поэтому петлю можно продолжить: раунд 2 стартовал с `gen_6` (279.9082) и

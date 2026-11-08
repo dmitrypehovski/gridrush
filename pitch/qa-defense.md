@@ -1,6 +1,7 @@
-# GRIDRUSH — Q&A defence: 14 опасных вопросов
+# GRIDRUSH — Q&A defence: 16 опасных вопросов
 
-> **FROZEN.** Числа из `results/FINAL_NUMBERS.md`, `results/loop.json`, `results/powerflow.json`.
+> **FROZEN.** Числа из `results/FINAL_NUMBERS.md`, `results/loop.json`, `results/powerflow.json`,
+> `results/loop_physics.json`, `results/loop_real.json`, `rsi_agent/rsi_log2.json`.
 > Формат: вопрос по-английски (так его зададут) + русская пометка, зачем спрашивают, + готовый
 > ответ дословно, 2–3 предложения. Учить наизусть не надо: выучи первые 6 слов каждого ответа.
 >
@@ -60,6 +61,11 @@ so we do not use it for capacity or stress calculations — that is written down
 > generations where the LLM proposer rewrites the policy itself, exact per-substation DP, and jumps
 > to 269.6 and then 279.9. The LLM log is in `rsi_agent/rsi_log.json`, so you can audit what it
 > changed and why.
+>
+> And it does not stop there: we kept the archive and ran a second round — six more generations,
+> best 280.256, plus zero point one two percent, and it converged with a proof, because the DP is the
+> exact optimum of the admissible flexible-only space and firm service and batteries are dominated.
+> That round is in `rsi_agent/rsi_log2.json` and `BEST2.md`.
 
 **Терминология из `theme/rsi.md`:** это **bounded RSI** — агент улучшает свой план и свой поиск,
 не свои веса. Говорите именно так.
@@ -195,6 +201,41 @@ at most 1.0 — and the site that sheds it is on a 99 percent tier, so it is con
 > The inputs are public: the EIA-930 hourly CSV that ships with this repo, and catalog ids from the
 > energy-hack repo. The honest framing is: I did not invent the grid data or the problem — I built
 > the thing that searches for an answer and can prove it.
+
+---
+
+## Q15. «Are there any real data in this project besides the load?»
+
+Проверяют, не всё ли синтетика, кроме одного CSV.
+
+> Yes. The hourly demand shape is real 2025 EIA-930 for twelve operators, and we also rebuilt the site
+> model on the public PG&E GRIP Data Portal — eight real PG&E substations with real names, real
+> coordinates, facility ratings and 2026 loadings (`sim/real_sites.py`). What is still synthetic is
+> documented and labelled: which candidate sites sit inside a substation, the interconnection
+> timelines, and the costs.
+
+**Если спросят «какие подстанции?»** — назовите две-три из `results/FINAL_NUMBERS.md`:
+SAN RAMON (Mission) 302.2 / 136.9 MW, STOCKDALE (Kern) 327.1 / 275.2 MW, CLAYTON (Diablo)
+193.1 / 124.9 MW. Это публичные данные PG&E, без ключа, с координатами и загрузкой 2026.
+
+---
+
+## Q16. «Why is the ratio only 1.22× on real data, and not 4.3×?»
+
+Самый умный вопрос из всех — отвечать уверенно, это не провал, а локализация ограничения.
+
+> Because at the substation aggregate level those real PG&E substations are large and are not the
+> bottleneck — so flexibility buys little there. PG&E's own Grid Needs Assessment shows where the
+> constraint actually lives: in a 2,000-circuit sample, 124 circuits are already deficient for 2026,
+> by up to 12.4 MW. That is why the next step is circuit-level ICA, and it is exactly the data we ask
+> for.
+
+**Формула на одну строку:** «the substation aggregate is not the bottleneck — the circuit is».
+**Не оправдываться** и не называть 1.22× «слабым результатом»: профильная модель даёт 4.3× там, где
+ёмкости синтетические, реальные 1.22× показывают, что премия за гибкость исчезает на агрегате и
+возвращается на уровне цепи. Это аргумент в пользу следующего шага, а не против метода.
+Аммуниция: `results/loop_real.json`, `web/dashboard_real.html`, `sim/real_sites.py`.
+
 
 ---
 

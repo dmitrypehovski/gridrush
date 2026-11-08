@@ -39,6 +39,11 @@ from a parametric mutator, then 7 generations where an LLM proposer rewrote the 
 **Synthetic and documented:** site geometry, substation capacity, timelines, costs — labelled on
 screen, never called real.
 
+We also rebuilt the site model on the public PG&E GRIP Data Portal (8 real substations, real
+coordinates, facility ratings and 2026 loadings — `sim/real_sites.py`); the flexibility premium drops
+to 1.22× at substation aggregate level, which locates the real constraint at the circuit level
+(PG&E GNA: 124 of 2,000 sampled circuits already deficient for 2026).
+
 ## 7. Result
 
 Against the two strategies operators use today — all firm (0 MW at month 12; $65.1M of modelled

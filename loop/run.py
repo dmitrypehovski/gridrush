@@ -58,10 +58,15 @@ def load_mock():
     return site_curves, evaluate, None
 
 
-def _site_coords() -> dict:
-    """x/y из data/sites.json (генерирует sim по seed=7) — для гео-карты в дашборде."""
+def _site_coords(region: str = "CAL") -> dict:
+    """x/y для гео-карты: реальные координаты PG&E при GRIDRUSH_SITES=real, иначе synthetic."""
+    path = os.path.join(ROOT, "data", "sites.json")
+    if os.environ.get("GRIDRUSH_SITES") == "real":
+        real = os.path.join(ROOT, "data", f"sites_{region}_real.json")
+        if os.path.exists(real):
+            path = real
     try:
-        with open(os.path.join(ROOT, "data", "sites.json"), encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             d = json.load(f)
         sites = d.get("sites", d) if isinstance(d, dict) else d
         return {s["id"]: (float(s.get("x", 0.0)), float(s.get("y", 0.0))) for s in sites}
@@ -69,13 +74,28 @@ def _site_coords() -> dict:
         return {}
 
 
+def _site_subnames(region: str = "CAL") -> dict:
+    """id → реальное имя подстанции (PG&E) при GRIDRUSH_SITES=real."""
+    if os.environ.get("GRIDRUSH_SITES") != "real":
+        return {}
+    path = os.path.join(ROOT, "data", f"sites_{region}_real.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            d = json.load(f)
+        return {x["id"]: x.get("substation", "") for x in d.get("sites", [])}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
 def site_records(curves: dict) -> list[dict]:
-    coords = _site_coords()
+    region = str(curves.get("region", "CAL"))
+    coords = _site_coords(region)
+    real_names = _site_subnames(region)
     out = []
     for i, sid in enumerate(curves["ids"]):
         out.append({
             "id": sid,
-            "substation": f"S{int(curves['sub_idx'][i]) + 1:02d}",
+            "substation": real_names.get(sid) or f"S{int(curves['sub_idx'][i]) + 1:02d}",
             "cap_mw": round(float(curves["cap_mw"][int(curves["sub_idx"][i])]), 2),
             "max_mw": round(float(curves["max_mw"][i]), 2),
             "x": round(coords.get(sid, (0.0, 0.0))[0], 5),
@@ -420,6 +440,22 @@ def main():
                 "gen_score": g["score"],
                 "gen_kept": g["kept"],
                 "gen_change": g["change"],
+            })
+        # the generation scores come from rsi_log.json (profile model). If the LLM
+        # portfolio scores differently on THIS model, log its actual score as the final point.
+        last_score = log["iterations"][-1]["score"] if log["iterations"] else -1e9
+        if abs(float(rsi_res["score"]) - float(last_score)) > 1e-6:
+            log["iterations"].append({
+                "iter": len(log["iterations"]),
+                "score": round(max(float(last_score), float(rsi_res["score"])), 4),
+                "delivered_mwmonths": round(float(rsi_res["delivered_mwmonths"]), 2),
+                "mw_at_month12": round(float(rsi_res["mw_at_month12"]), 2),
+                "violations_mwh": 0.0,
+                "net_value_musd": round(float(rsi_res["net_value_musd"]), 3),
+                "phase": "llm", "gen": 6,
+                "gen_score": round(float(rsi_res["score"]), 4),
+                "gen_kept": True,
+                "gen_change": "LLM-written policy, evaluated on this site model",
             })
         meta_llm = {"policy_file": os.path.relpath(args.policy_file, ROOT),
                     "generations": gen_rows,

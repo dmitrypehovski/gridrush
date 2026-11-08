@@ -107,6 +107,15 @@ a **real AC power flow** (pandapower `mv_oberrhein`: a real 20 kV German MV feed
 violations, voltage collapse). That is exactly why this is a *siting* problem: 0.5–10 MW edge sites
 are the right unit, and the agent has to distribute them. `web/physics.html` shows every number from a measured run.
 
+**Real PG&E data.** `sim/real_sites.py` rebuilds the site model from the public **PG&E GRIP Data
+Portal** (no key): 8 real substations with real coordinates, facility ratings and 2026 loadings.
+Running the same agent on them gives **1.22×** (397.7 MW online at month 12, 11,533 sellable
+MW·months, zero violations) — the premium collapses because, at the *substation aggregate* level,
+these substations are large and not the bottleneck. PG&E's own Grid Needs Assessment shows where the
+constraint actually lives: in a 2,000-circuit sample, **124 circuits (6.2%) are already deficient for
+2026** (up to 12.4 MW). That is the next data we need, and it is why the ask is circuit-level ICA.
+`web/dashboard_real.html`, `results/loop_real.json`, `data/sites_CAL_real.json`.
+
 **Physics in the loop.** The measured admission limit — **6.53 MW of new load per MV feeder**
 (first violation at 7.03 MW) — is not just a check: it is passed into the portfolio builder
 itself (`build_portfolio(..., sub_limit_mw=...)`, driven by `sim/physics_gate.py` →

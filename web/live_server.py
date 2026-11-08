@@ -211,19 +211,25 @@ svg{flex:1;min-height:0;width:100%}
 .feed{flex:1;overflow:hidden;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
  line-height:1.55;color:#b9c7da}
 .feed div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed .phase{color:#5b6b80;font-style:italic;margin:3px 0}
 .feed .p{color:var(--blue)} .feed .l{color:var(--amber)} .feed .m{color:var(--cyan)}
 .feed .new{animation:in .35s ease-out}
 @keyframes in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 footer{display:flex;gap:16px;font-size:10px;color:var(--dim);border-top:1px solid var(--line);padding-top:7px}
 footer b{color:#9fb0c6;font-weight:600}
 .err{color:var(--red);font-size:11px;white-space:pre-wrap}
+#again{font:inherit;font-size:11px;font-weight:700;letter-spacing:.4px;color:#0b121b;background:var(--amber);
+ border:0;border-radius:6px;padding:5px 11px;cursor:pointer;margin-left:6px}
+#again:hover{filter:brightness(1.08)}
+#again:disabled{opacity:.5;cursor:default}
 </style></head><body><div class="wrap">
 <header>
   <h1>GRIDRUSH</h1>
   <div class="sub">live run — the agent proposes, the 8,760-hour simulator judges, the archive keeps the best</div>
   <div class="badge"><span class="dot"></span><span class="live" id="live">LIVE</span>
     <span id="phase">loading</span><span>·</span><span id="clock">0.0 s</span>
-    <span>·</span><span id="region">CAL</span></div>
+    <span>·</span><span id="region">CAL</span>
+    <button id="again" title="run the loop again (12 s)">Run again</button></div>
 </header>
 <div class="kpis">
   <div class="kpi"><div class="l">best score</div><div class="v" id="k-score">—</div><div class="s" id="k-iters">iterations 0</div></div>
@@ -277,18 +283,32 @@ function draw(iters){
   t2.setAttribute("fill","#e8eef7");t2.setAttribute("font-size","12");t2.setAttribute("text-anchor","end");
   t2.textContent=money(last.score);svg.appendChild(t2);
 }
+let lastParamScore=-1e9, lastPhase=null;
+function pushLine(txt,cls){
+  const d=document.createElement("div"); d.className="new";
+  d.innerHTML=`<span class="${cls}">${txt.replace(/</g,"&lt;")}</span>`;
+  feedEl.prepend(d);
+  while(feedEl.children.length>24) feedEl.removeChild(feedEl.lastChild);
+}
 function feed(rows){
   rows.slice(lastN).forEach(r=>{
-    const d=document.createElement("div"); d.className="new";
-    const cls=r.phase==="local"?"l":(r.phase==="llm"?"m":"p");
-    let txt;
-    if(r.phase==="parametric") txt=`[parametric #${r.iter}] score ${money(r.score)} · ${r.mw_at_month12.toFixed(1)} MW @12`;
-    else if(r.phase==="local") txt=`[local] ${r.site} → ${r.change} · ${money(r.score)}`;
-    else txt=`[llm] gen ${r.gen} · ${r.change} · ${money(r.score)}`;
-    d.innerHTML=`<span class="${cls}">${txt.replace(/</g,"&lt;")}</span>`;
-    feedEl.prepend(d); });
+    if(r.phase!==lastPhase){
+      lastPhase=r.phase;
+      const label={parametric:"— parametric proposer: score plateau, archive keeps best —",
+                   local:"— per-site local search: every proposal judged by the full-year check —",
+                   llm:"— LLM-written policy arrives —"}[r.phase]||r.phase;
+      pushLine(label,"phase");
+    }
+    if(r.phase==="parametric"){
+      // log only archive improvements (the meaningful event), not every rejected candidate
+      if(r.score>lastParamScore+0.01){ lastParamScore=r.score; pushLine(`[best] score ${money(r.score)} · ${r.mw_at_month12.toFixed(1)} MW @12`,"p"); }
+    } else if(r.phase==="local"){
+      pushLine(`[local] ${r.site} → ${r.change} · ${money(r.score)}`,"l");
+    } else {
+      pushLine(`[llm] gen ${r.gen} · ${r.change} · ${money(r.score)}`,"m");
+    }
+  });
   lastN=rows.length;
-  while(feedEl.children.length>26) feedEl.removeChild(feedEl.lastChild);
 }
 async function tick(){
   try{
@@ -317,7 +337,24 @@ async function tick(){
   }catch(e){}
   setTimeout(tick,120);
 }
-tick();
+function reset(){
+  lastN=0; lastParamScore=-1e9; lastPhase=null; feedEl.innerHTML="";
+  $("live").textContent="LIVE"; $("live").style.color="var(--red)";
+  document.querySelector(".dot").style.animation="p 1s infinite";
+  $("k-score").textContent="—"; $("k-net").textContent="—";
+  $("k-mw12").textContent="—"; $("k-deliv").textContent="—";
+  $("k-viol").textContent="—"; $("k-iters").textContent="iterations 0";
+  const svg=$("chart"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+}
+$("again").addEventListener("click", async ()=>{
+  const btn=$("again"); btn.disabled=true;
+  try{ await fetch("/start",{cache:"no-store"}); reset(); setTimeout(()=>{btn.disabled=false;tick();},150); }
+  catch(e){ btn.disabled=false; }
+});
+// if the server already ran a demo before the page opened, offer a fresh one
+fetch("/state",{cache:"no-store"}).then(r=>r.json()).then(s=>{
+  if(s.status==="done"||s.status==="error"){ reset(); }
+}).finally(()=>tick());
 </script></body></html>"""
 
 

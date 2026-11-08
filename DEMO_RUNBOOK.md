@@ -118,7 +118,11 @@ cd /Users/dmitrypehovski/Documents/deepseek-harness/default-workspace/gridrush
 python3 web/live_server.py
 ```
 
-Открывается `http://127.0.0.1:8767/` — **12 секунд**, и на глазах: score растёт $0 → $279.9M,
+**Терминал с сервером не закрывать** — ссылка живёт, только пока процесс запущен
+(`ERR_CONNECTION_REFUSED` = сервер не запущен или ты его остановил Ctrl+C). Если на сцене
+открыл поздно и видишь `DONE` — нажми кнопку **`Run again`** в правом верхнем углу.
+
+Открывается `http://127.0.0.1:8767/` — **11 секунд**, и на глазах: score растёт $0 → $279.9M,
 в логе видно, как параметрический поиск сменяется локальным (агент правит план сайт-за-сайтом:
 `S07-5 → flex 4.0 MW @ 0.9990`), в конце подключается LLM-политика и выдаёт финальные
 **$279.9M / 85.4 MW / 0 нарушений**.
@@ -127,7 +131,10 @@ python3 web/live_server.py
 eight thousand seven hundred sixty hours, the archive keeps the best. Twelve seconds. The last jump
 is the policy the LLM rewrote during the day.»
 
-Скриншот финала для бэкапа: `web/qa_live_run.png`. Если сцена не готова ждать 12 секунд —
+Скриншот финала для бэкапа: `web/qa_live_run.png` (состояние до появления кнопки Run again).
+
+**Важно:** основной дашборд (`web/dashboard.html`) открывается как файл и **сервер ему не нужен**.
+Live-run — отдельная опция «покажи, что оно правда считает сейчас». Если сцена не готова ждать 12 секунд —
 не запускай, покажи `Replay loop` и скажи «the same run, replayed».
 
 ## 7.6 One-pager для судей

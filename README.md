@@ -38,9 +38,12 @@ The trade is explicit and physical:
 - the **SLA** decides how many stress hours you may drop, and the contract price pays for reliability;
 - a **battery** covers the deficit in those hours, at a capex.
 
-The agent’s plan is then checked by an **independent hour-by-hour verifier** (per-substation load
-against capacity, including every site on it). Violations cost the run; the policy repairs its own
-plan before it is scored.
+The agent’s plan is then checked hour by hour: the evaluator recomputes every substation’s load from
+every site on it and scores grid limits plus each site’s own SLA. One honest detail — flexible load
+cannot exceed headroom **by construction** (that is what flexible service means: the site is clipped
+to what the grid can carry), so for the flexible portfolio the agent actually chooses, the binding
+check is the **per-site SLA**, not the violation count. Violations would appear if *firm* capacity
+were oversubscribed; we report both numbers and we say which one binds.
 
 ## Results (CAL / CAISO, real 2025 hourly replay)
 
@@ -107,13 +110,28 @@ a **real AC power flow** (pandapower `mv_oberrhein`: a real 20 kV German MV feed
 violations, voltage collapse). That is exactly why this is a *siting* problem: 0.5–10 MW edge sites
 are the right unit, and the agent has to distribute them. `web/physics.html` shows every number from a measured run.
 
+**Two limits from one real feeder — 8.2 MW and 6.53 MW.** Both are measured, and they answer
+different questions. **8.2 MW** is the first thermal violation when the top-5 site profile is scaled
+uniformly (transformer T142 reaches 100.4 %). **6.53 MW** is the conservative admission limit we
+enforce: the same total added load spread over the five best-headroom buses in proportion to their
+headroom, with every bus at or above 0.95785 p.u. and every branch at or below 100 %. We quote 6.53 on
+stage because it is the number the optimiser actually uses.
+
+**Does 4.30× survive if the economics are wrong?** The ratio is invariant to the margin *level* —
+the same prices scale the agent and the baselines together: 4.30× at $0.033, $0.10 and $0.30 per
+MW-month (`results/sensitivity.json`). What is sensitive is the SLA premium spread: flattening
+1.25 / 1.00 / 0.80 to 1.10 / 1.00 / 0.95, and halving the penalty, still gives **4.04×**. The
+physical ratio — **3.82× contract-compliant MW-months, 2490.6 vs 651.3** — contains no prices at all.
+What rests on assumptions is the absolute dollar level ($279.9M), not the comparison.
+
 **Real PG&E data.** `sim/real_sites.py` rebuilds the site model from the public **PG&E GRIP Data
 Portal** (no key): 8 real substations with real coordinates, facility ratings and 2026 loadings.
 Running the same agent on them gives **1.22×** (397.7 MW online at month 12, 11,533 sellable
 MW·months, zero violations) — the premium collapses because, at the *substation aggregate* level,
 these substations are large and not the bottleneck. PG&E's own Grid Needs Assessment shows where the
-constraint actually lives: in a 2,000-circuit sample, **124 circuits (6.2%) are already deficient for
-2026** (up to 12.4 MW). That is the next data we need, and it is why the ask is circuit-level ICA.
+constraint actually lives: in a 2,000-circuit sample, **124 of the 1,462 circuits that actually carry data
+(8.5%; 538 of the 2,000 sampled rows are a −99.99 sentinel) are already deficient for 2026** (up to
+12.4 MW). That is the next data we need, and it is why the ask is circuit-level ICA.
 `web/dashboard_real.html`, `results/loop_real.json`, `data/sites_CAL_real.json`.
 
 **Physics in the loop.** The measured admission limit — **6.53 MW of new load per MV feeder**
@@ -143,8 +161,9 @@ Honesty is part of the demo. Every number on screen is labeled.
   SLA price multipliers (1.25 / 1.00 / 0.80), SLA penalty multiplier;
 - the 2025 year is replayed as a representative year across the 36-month horizon.
 
-Data-quality caveats we found and handled: 7 corrupt demand rows in the CSV (interpolated), one
-24-hour ERCOT gap, and a physically implausible `solar_mw` column (not used for capacity or stress
+Data-quality caveats we found and handled: 7 corrupt demand rows in the CSV (interpolated), 26 rows
+with an empty demand value (interpolated), one 24-hour ERCOT gap, and a physically implausible
+`solar_mw` column (not used for capacity or stress
 calculations; only the demand shape is used).
 
 ## Run it

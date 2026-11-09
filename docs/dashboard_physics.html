@@ -770,7 +770,7 @@
       k3sub = "delivered \u00d7 $0.10M/MW&middot;mo &minus; capex &minus; SLA penalty";
     }
     var k4sub = (sla ? "SLA " + esc(sla) + " &middot; " : "") +
-      (compact ? "independent verifier" : "independent hour-by-hour verifier");
+      (compact ? "modelled check; SLA is binding" : "modelled hourly check \u2014 flex load is clipped to headroom, so the binding constraint is each site\u2019s SLA");
 
     var cards = [
       {
@@ -2315,7 +2315,7 @@
     { k: "Compute margin", v: "$0.10M per MW\u00b7month ($1.2M/MW\u00b7yr)", s: "speech", src: "AGI House talk" },
     { k: "SLA options", v: "99.9% (8.76 h/yr) or 99.0% (87.6 h/yr)", s: "speech", src: "audience Q&A" },
     { k: "SLA penalty", v: "5\u00d7 margin per curtailed MWh above budget", s: "synthetic", src: "CONTRACT \u00a71" },
-    { k: "Verifier", v: "independent hour-by-hour grid check; violations = 0", s: "real", src: "sim/verifier" }
+    { k: "Verifier", v: "hourly grid check; flexible load is clipped to headroom, so the binding constraint is each site SLA", s: "real", src: "sim/engine.py" }
   ];
   function renderAssumptions() {
     var grid = document.getElementById("assump-grid");

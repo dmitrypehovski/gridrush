@@ -266,3 +266,22 @@ net value $1410.1M vs $1158.0M for the best honest strategy. Files: `results/loo
 5. **Never** promise "5 nines" and never call `mv_oberrhein` "our feeder" — it is a public
    German test case, and we use it as validation of the load class, not as a site.
 6. **Never** "we beat an optimiser". Say "we give you the loop, the verifier and the curve".
+
+## Q17. "Isn't your 'independent verifier' just clipping the load?"
+
+Honest answer: for **flexible** service, yes — flexible load cannot exceed headroom by construction,
+because that is what the contract means: the site is curtailed to what the grid can carry. Violations
+would only appear if *firm* capacity were oversubscribed, and this agent chooses no firm sites. So the
+constraint that actually binds here is the **per-site SLA**, which is enforced (zero breach energy),
+not the violation count. We now say that explicitly in the README, the dashboard and the frozen
+numbers. What would make the violation check load-bearing is a firm-heavy or mixed portfolio — that is
+one of the next steps.
+
+## Q18. "Does 4.30× survive if your synthetic economics are wrong?"
+
+The ratio does: prices scale the agent and the baselines together, so it is **invariant to the margin
+level** — 4.30× at one-third, one times and three times our margin (`results/sensitivity.json`).
+The physical ratio — **3.82×, 2490.6 vs 651.3 contract-compliant MW-months** — contains no prices at
+all. Flattening the SLA premium (1.10/1.00/0.95 instead of 1.25/1.00/0.80) and halving the penalty
+gives **4.04×**, still above four. What *is* assumption-dependent is the absolute dollar level
+($279.9M); the comparison is not.

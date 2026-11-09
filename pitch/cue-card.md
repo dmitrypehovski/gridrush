@@ -25,7 +25,7 @@
 - "**2% of the hours** for months of running time"
 
 *(click: plan)* "**four times** more value. no red."
-*(click: worst day)* "the naive plan **sheds 28 MW** — GRIDRUSH **never more than one**."
+*(click: worst day)* "at 6 p.m. the naive plan **sheds 28.4 MW** — GRIDRUSH **1.0**."
 
 ### 2:00 — LEARNING *(click: `Replay loop`)*
 

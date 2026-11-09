@@ -94,12 +94,11 @@ the sentence still works.
 
 **SCREEN:** click — **three-year plan**, then **worst-day chart**.
 
-> Three years: four times more value. Worst day: no red, zero violations. And at the evening peak,
-> the naive plan must shed twenty-eight megawatts. GRIDRUSH never sheds more than one.
+> Three years: four times more value. Worst day: no red. And at six p.m., on the way into the
+> evening peak, the naive plan must shed twenty-eight megawatts. GRIDRUSH never sheds more than one.
 
 **CUES:** the three strategies are the demo — if you lose 20 seconds anywhere, cut the map sentence,
-never this. Say "safe, and useless" flat, without a smile; the contrast is the argument. "twenty-eight
-megawatts … one" is the sentence judges remember: say both numbers slowly.
+never this. Say "safe, and useless" flat, without a smile; the contrast is the argument. "six p.m. … twenty-eight megawatts … one" is the sentence judges remember: say both numbers slowly.
 
 ---
 

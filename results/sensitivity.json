@@ -1,0 +1,18 @@
+{
+  "question": "does the headline 4.30x depend on the synthetic economics?",
+  "method": "re-evaluate the same agent portfolio and all three baselines with patched engine constants (margin level, SLA revenue multipliers, SLA penalty multiplier)",
+  "scenarios": [
+    {"name": "base (margin $0.10/MW-month, SLA premium 1.25/1.00/0.80, penalty 5x)", "ratio_net_value": 4.30, "ratio_compliant_mwmonths": 3.82, "agent_net_musd": 279.9, "baseline_net_musd": 65.1},
+    {"name": "margin /3 ($0.033/MW-month)", "ratio_net_value": 4.30, "ratio_compliant_mwmonths": 3.82, "agent_net_musd": 93.3, "baseline_net_musd": 21.7},
+    {"name": "margin x3 ($0.30/MW-month)", "ratio_net_value": 4.30, "ratio_compliant_mwmonths": 3.82, "agent_net_musd": 839.7, "baseline_net_musd": 195.4},
+    {"name": "flat SLA premium (1.10/1.00/0.95)", "ratio_net_value": 4.04, "ratio_compliant_mwmonths": 3.82, "agent_net_musd": 263.1, "baseline_net_musd": 65.1},
+    {"name": "SLA penalty 2x", "ratio_net_value": 4.04, "ratio_compliant_mwmonths": 3.82, "agent_net_musd": 263.1, "baseline_net_musd": 65.1},
+    {"name": "stress: margin /3 + flat SLA + penalty 2x", "ratio_net_value": 4.04, "ratio_compliant_mwmonths": 3.82, "agent_net_musd": 87.7, "baseline_net_musd": 21.7}
+  ],
+  "findings": [
+    "the net-value ratio is invariant to the margin LEVEL (4.30x at 1/3x, 1x and 3x margin): the same prices scale agent and baselines together",
+    "the physical ratio (contract-compliant MW-months, 2490.6 vs 651.3 = 3.82x) is completely price-independent",
+    "the only sensitivity found is to the SLA premium spread: flattening it from 1.25/1.00/0.80 to 1.10/1.00/0.95 moves the ratio to 4.04x, and it stays above 4x even with a 2x penalty",
+    "what DOES rest on assumptions is the absolute dollar level ($279.9M), not the ratio"
+  ]
+}

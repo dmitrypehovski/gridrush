@@ -117,6 +117,36 @@ to improve). `gen_10` got worse (−1.4) and was rejected by the keep-best rule.
 MIDW 3.88×, violations 0 everywhere) + the physics-in-the-loop card with links to
 `dashboard_<REGION>.html`. Build: `python3 web/build_regions.py`.
 
+## Robustness: does 4.30x depend on the synthetic economics?
+
+`results/sensitivity.json`. Same agent portfolio, same three baselines, patched engine constants:
+
+| scenario | net-value ratio | compliant MW-months ratio |
+|---|---|---|
+| base (margin 0.10 $M/MW-month, SLA premium 1.25/1.00/0.80, penalty 5x) | **4.30x** | 3.82x |
+| margin /3 (0.033 $M/MW-month) | **4.30x** | 3.82x |
+| margin x3 (0.30 $M/MW-month) | **4.30x** | 3.82x |
+| flat SLA premium (1.10/1.00/0.95) | 4.04x | 3.82x |
+| SLA penalty 2x | 4.04x | 3.82x |
+| stress: margin/3 + flat SLA + penalty 2x | 4.04x | 3.82x |
+
+Findings: the **ratio is invariant to the margin level** (prices scale both sides); the physical ratio
+(2490.6 vs 651.3 sellable MW-months) contains **no prices at all**; only the SLA premium spread moves
+it, and it stays above 4x. What is assumption-dependent is the **absolute dollar level** ($279.9M),
+not the comparison.
+
+## Two honest corrections (external audit)
+
+1. **"Zero violations" is structural for flexible service.** Flexible load is clipped to the available
+   headroom by construction, so violations can only come from oversubscribed *firm* capacity; the
+   agent picks no firm sites. The binding check for this portfolio is the **per-site SLA** (enforced,
+   zero breach). Say "zero modelled violations — and the constraint that actually binds is each
+   site's SLA", not "we proved the grid is safe".
+2. **Stress-day numbers are 18:00, not the 20:00 peak.** At 18:00 the naive portfolio sheds
+   **28.4 MW** and GRIDRUSH **1.0 MW**; at the 20:00 demand peak (43,860 MW) it is **18.2 vs 0.0**.
+   Both hours are in `grid.stress_day`. GNA: 124 positive-deficiency circuits out of **1,462 with
+   data (8.5%)** — 538 of the 2,000 sampled rows are a -99.99 sentinel, so 6.2% understated the share.
+
 ## What NOT to say
 
 - "real data" without "synthetic site geometry"; "zero violations" without "in the model";

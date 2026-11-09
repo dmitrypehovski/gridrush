@@ -1,0 +1,205 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>GRIDRUSH — demo guide</title>
+<style>
+:root{--bg:#080d14;--panel:#0f1823;--line:#1e2c40;--txt:#e8eef7;--dim:#7b8ba3;--green:#2dd4a7;--amber:#f5a524;--cyan:#22d3ee;--red:#ff5c6c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 20% -10%,#12202f 0%,#080d14 55%);color:var(--txt);
+ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;
+ padding:30px 38px;line-height:1.5;max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:8px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+h1{font-size:30px;letter-spacing:2px;font-weight:850}
+.sub{color:var(--dim);font-size:13px;padding-bottom:4px}
+h2{font-size:12px;letter-spacing:1.7px;color:var(--dim);text-transform:uppercase;margin:26px 0 10px;font-weight:750}
+h3{font-size:17px;margin:0 0 4px;font-weight:800}
+p{font-size:13.5px;color:#c7d3e2;margin:5px 0}
+a{color:var(--green)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px 17px;margin:10px 0}
+.card.hl{border-color:#2c5a4c;background:linear-gradient(180deg,rgba(45,212,167,.06),rgba(15,24,35,1))}
+.k{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;color:#0b121b;background:var(--dim);padding:2px 6px;border-radius:4px;margin-right:7px;vertical-align:2px}
+.k.g{background:var(--green)} .k.a{background:var(--amber)} .k.c{background:var(--cyan)} .k.r{background:var(--red)}
+.tag{font-size:10.5px;color:var(--dim);margin-left:8px}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12.8px}
+th{text-align:left;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);
+ border-bottom:1px solid #2b3d55;padding:6px 8px;font-weight:700}
+td{padding:6px 8px;border-bottom:1px solid #16222f;vertical-align:top;color:#c7d3e2}
+td b{color:var(--txt)}
+ol,ul{margin:8px 0 8px 20px;font-size:13.5px;color:#c7d3e2}
+li{margin:4px 0}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.step{background:#0c1520;border:1px solid var(--line);border-radius:9px;padding:10px 11px}
+.step .n{font-size:10px;color:var(--dim);letter-spacing:1px}
+.step b{display:block;font-size:13px;margin:2px 0 3px}
+.step span{font-size:11px;color:#b9c7da}
+.warn{border-left:3px solid var(--amber);background:#1a1408;border-radius:8px;padding:11px 14px;margin:10px 0}
+.warn p{color:#e8d9b5}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:10px;font-size:10.5px;color:var(--dim)}
+@media (max-width:900px){.flow{grid-template-columns:1fr 1fr}}
+</style></head><body>
+
+<header>
+  <h1>GRIDRUSH</h1>
+  <div class="sub">demo guide — what each page shows, what each panel means, and the order to show them</div>
+</header>
+
+<p style="margin-top:12px">This page is for a reader who has two minutes and no context. Every other page in this
+project answers one question; this page says which one, and what to look at first. Everything is
+offline, needs no keys, and every number is reproducible from
+<a href="https://github.com/dmitrypehovski/gridrush">the repository</a>.</p>
+
+<h2>1 · the one-sentence story</h2>
+<div class="card hl">
+  <p style="font-size:15px"><b>A data centre can be built in 2–3 years, but connecting it to the grid takes
+  7–10 years.</b> On stage the utility was asked what a 98%-availability contract would change, and
+  answered "we're trying". GRIDRUSH answers that question with a computed plan: which edge sites to
+  connect, at what MW, under which availability tier and with what flexibility — verified over all
+  8,760 hours of 2025 and a real AC power flow.</p>
+</div>
+
+<h2>2 · the three-minute demo, in order</h2>
+<div class="flow">
+  <div class="step"><div class="n">0:00</div><b>Problem</b><span>7–10 years; the 98% question; "we're trying"</span></div>
+  <div class="step"><div class="n">0:20</div><b>What it decides</b><span>40 sites, 8 substations, four choices per site</span></div>
+  <div class="step"><div class="n">0:50</div><b>Three strategies</b><span>0 MW / 173 MW / 85.4 MW</span></div>
+  <div class="step"><div class="n">2:00</div><b>Learning</b><span>click Replay loop: plateau 179 → 280</span></div>
+  <div class="step"><div class="n">2:30</div><b>Reality + ask</b><span>physics costs 44%; circuit-level data is the ask</span></div>
+</div>
+<p>Click order on the stage dashboard: <b>site map → three-strategy card → MW by month → worst day →
+Replay loop</b>. Nothing else is clicked.</p>
+
+<h2>3 · every page, and what it is for</h2>
+
+<div class="card">
+  <h3><span class="k g">MAIN</span>Stage dashboard <span class="tag">dashboard.html · 1920×1080, zoom 100%</span></h3>
+  <p>The one page shown on stage. Six panels, left to right, top to bottom:</p>
+  <table>
+    <tr><th>Panel</th><th>What it shows</th><th>What to look at</th></tr>
+    <tr><td><b>KPI strip</b></td><td>four headline numbers of the winning plan</td>
+        <td><b>4.30×</b> net value vs the best honest strategy · <b>85.4 MW</b> online at month 12 ·
+        <b>$279.9M</b> modelled compute margin · <b>0 MWh</b> grid violations</td></tr>
+    <tr><td><b>1 · Site portfolio</b></td><td>the 32 sites the agent energized, on a map of substations,
+        shaded by availability tier</td>
+        <td>dark amber = 99.99% commitment, light amber = 99%; the 8 refused sites are grey. Hover any
+        dot for its MW, SLA, month, curtailment hours</td></tr>
+    <tr><td><b>2 · Three strategies</b></td><td>the comparison that carries the pitch: all-firm,
+        all-non-firm, and the agent</td>
+        <td><b>0 MW / $65.1M</b> → <b>173 MW / −$449.5M</b> → <b>85.4 MW / +$279.9M</b>. The middle row
+        is the punchline: speed without reliability is loss-making</td></tr>
+    <tr><td><b>3 · Energized MW by month</b></td><td>running MW for months 1→36, by connection type</td>
+        <td>ramp reaches full power by month ~12; this is why the flexibility premium exists</td></tr>
+    <tr><td><b>4 · Worst day</b></td><td>a real 2025 day: demand, free headroom, required curtailment
+        for the naive plan and for GRIDRUSH</td>
+        <td>at <b>18:00</b> the naive plan must shed <b>28.4 MW</b>, GRIDRUSH <b>1.0 MW</b>; at the
+        <b>20:00</b> peak (43,860 MW) it is 18.2 vs 0.0</td></tr>
+    <tr><td><b>5 · Agent learning</b></td><td>score of the best plan at every iteration</td>
+        <td>fast search plateaus at <b>179</b>; the LLM-written policy jumps to <b>280</b>;
+        <b>207 iterations</b>. Press <b>Replay loop</b> to re-run the animation</td></tr>
+    <tr><td><b>Assumptions</b></td><td>one line per modelling parameter, tagged REAL / SYNTHETIC / SPEECH</td>
+        <td>this is the honesty panel — point at it if a judge asks "is this real?"</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3><span class="k a">ALL</span>Every region + reality checks <span class="tag">regions.html</span></h3>
+  <p>Four operators on their own 2025 data with the <b>same policy, no tuning</b>: CAISO 4.30×, ERCOT
+  3.41×, PJM 4.07×, MISO 3.88× — zero violations everywhere. Below them, two "reality check" cards:
+  physics inside the optimiser (2.39×) and real PG&amp;E substations (1.22×). This is the page to open
+  for "show me it generalises" or "is any of it real".</p>
+</div>
+
+<div class="card">
+  <h3><span class="k c">AC PF</span>Real AC power flow <span class="tag">physics.html</span></h3>
+  <p>One measured AC power-flow study on a real 20 kV medium-voltage feeder (<code>pandapower</code> /
+  <code>mv_oberrhein</code>: 179 buses, 2×25 MVA transformers, 37.1 MW served).</p>
+  <table>
+    <tr><th>Number</th><th>Meaning</th></tr>
+    <tr><td><b>0.9756 p.u.</b></td><td>base-case minimum voltage — the feeder is healthy before we add load</td></tr>
+    <tr><td><b>8.2 MW</b></td><td>spare capacity before the first thermal violation (a transformer hits 100.4%)</td></tr>
+    <tr><td><b>31.8 MW</b></td><td>the five largest sites of the agent's plan — they do not fit on one feeder (71 violations)</td></tr>
+    <tr><td><b>2.84–6.60 MW</b></td><td>per-bus headroom: what a single bus can take with zero violations</td></tr>
+  </table>
+  <p>The conclusion on the page is the useful part: this is a <b>siting</b> problem, not a megawatt
+  problem — 0.5–10 MW edge sites are the right unit, and they must be distributed.</p>
+</div>
+
+<div class="card">
+  <h3><span class="k c">IN LOOP</span>Physics inside the optimiser <span class="tag">dashboard_physics.html · 2.39×</span></h3>
+  <p>The same dashboard layout, but the loop ran with a <b>measured admission limit of 6.53 MW of new
+  load per feeder</b> as a hard constraint inside the portfolio builder — and the final plan is verified
+  with eight real AC power-flow runs, all clean.</p>
+  <p><b>Why 6.53 and not 8.2?</b> They answer different questions. 8.2 MW is the first thermal
+  violation when the top-5 profile is scaled uniformly; 6.53 MW is the conservative limit we enforce:
+  the same total spread over the five best-headroom buses in proportion to their headroom, with every
+  bus at or above 0.95785 p.u. and every branch at or below 100%.</p>
+  <p><b>What to look at:</b> the headline drops from 4.30× to <b>2.39×</b> ($279.9M → $155.5M,
+  85.4 → 44.7 MW). That <b>−44.5%</b> is the honest cost of real physics — say the number before a
+  judge asks.</p>
+</div>
+
+<div class="card">
+  <h3><span class="k a">REAL</span>Real PG&amp;E substations <span class="tag">dashboard_real.html · 1.22×</span></h3>
+  <p>The site model rebuilt on the <b>public PG&amp;E GRIP Data Portal</b> (ArcGIS REST, no key):
+  eight real substations with real coordinates, facility ratings and 2026 loadings — e.g. SAN RAMON
+  302.2/136.9 MW, STOCKDALE 327.1/275.2, CLAYTON 193.1/124.9.</p>
+  <p><b>Result: 1.22×, 397.7 MW at month 12, 11,533 contract-compliant MW-months, zero violations.</b></p>
+  <p><b>Why so much lower — and why this is the most valuable finding:</b> at the substation aggregate
+  level, real PG&amp;E substations are large and are <b>not</b> the bottleneck, so flexibility buys
+  little. The constraint lives at the <b>circuit</b> level: in a sample of 2,000 circuits, 124 had a
+  positive 2026 deficiency (538 rows are a "no data" sentinel, so the honest share is 124 of 1,462
+  circuits with data = <b>8.5%</b>). That is exactly the data GRIDRUSH asks for.</p>
+</div>
+
+<div class="card">
+  <h3><span class="k">REGION</span>Per-region dashboards <span class="tag">dashboard_CAL / _TEX / _MIDA / _MIDW.html</span></h3>
+  <p>The identical dashboard on four operators' 2025 data. Use one of these to answer "does it work
+  outside California?" — the ratios and the three-strategy comparison are on each page, and nothing was
+  retuned per region.</p>
+</div>
+
+<div class="card">
+  <h3><span class="k g">DECK</span>Overview deck + video <span class="tag">GRIDRUSH-overview-deck.pdf · GRIDRUSH-overview.mp4</span></h3>
+  <p><b>Deck:</b> ten slides — problem, what the agent decides, three strategies, why it wins, worst day,
+  the learning loop, two reality checks, honest limitations, the ask. Use it as a leave-behind or to
+  brief a judge in 90 seconds.</p>
+  <p><b>Video:</b> the three-minute walkthrough of the same story, for readers who prefer watching.</p>
+</div>
+
+<div class="card">
+  <h3><span class="k">SOURCE</span>Project archive + repository <span class="tag">GRIDRUSH-project.zip · GitHub</span></h3>
+  <p>The archive contains everything: the simulator, the RSI loop and its logs, all result JSONs, the
+  dashboards, the deck, the one-pager and the written material. Offline, no keys, no network. The
+  repository adds history and the full source of every page.</p>
+</div>
+
+<h2>4 · numbers you will hear, and what they mean</h2>
+<table>
+  <tr><th>Number</th><th>Meaning</th></tr>
+  <tr><td><b>4.30×</b></td><td>net value of the agent's plan vs the best of three honest baseline strategies, over 36 months</td></tr>
+  <tr><td><b>3.82×</b></td><td>the same comparison in <b>physical</b> units: 2,490.6 vs 651.3 contract-compliant MW-months (contains no prices)</td></tr>
+  <tr><td><b>85.4 MW</b></td><td>compute online at month 12, all of it inside its own SLA (the firm-only plan has 0)</td></tr>
+  <tr><td><b>+$279.9M</b></td><td>modelled compute margin over 36 months — a margin metric on a synthetic portfolio, not revenue</td></tr>
+  <tr><td><b>−$449.5M</b></td><td>what the "sign everything non-firm at max" strategy loses after 1.15M MWh of SLA breach</td></tr>
+  <tr><td><b>28.4 MW → 1.0 MW</b></td><td>required curtailment at 18:00 on the worst day: naive portfolio vs GRIDRUSH</td></tr>
+  <tr><td><b>179 → 280</b></td><td>learning curve: plateau of the fast search, then the LLM-written policy's jump</td></tr>
+  <tr><td><b>207</b></td><td>iterations: 200 parametric + 7 LLM-written policy generations (one failed, kept in the log)</td></tr>
+  <tr><td><b>2.39×</b></td><td>the same agent with the measured AC-power-flow limit inside the loop — the honest, physics-checked number</td></tr>
+  <tr><td><b>1.22×</b></td><td>the same agent on eight real PG&amp;E substations — where the constraint moves to the circuit</td></tr>
+  <tr><td><b>6.53 MW</b></td><td>measured admission limit per MV feeder (voltage ≥ 0.95785 p.u., loading ≤ 100%)</td></tr>
+</table>
+
+<h2>5 · honest caveats (say them before a judge does)</h2>
+<div class="warn">
+  <p><b>1.</b> "Zero modelled violations" is <b>structural</b> for flexible service: flexible load is
+  clipped to headroom by construction. The constraint that actually binds is each site's <b>SLA</b>,
+  enforced with zero breach energy. Violations would matter for a firm-heavy portfolio.</p>
+  <p><b>2.</b> The ratio is <b>invariant to the price level</b> (4.30× at ⅓×, 1× and 3× margin), and the
+  physical ratio 3.82× contains no prices at all. Flattening the SLA premium and doubling the penalty
+  still gives <b>4.04×</b>. What is assumption-dependent is the absolute dollar level, not the
+  comparison.</p>
+  <p><b>3.</b> The "all firm" baseline is honest but weak (651 MW-months at 200 MW of nameplate) because
+  firm capacity is capped by the substation's tightest hour. That is precisely why the real-PG&amp;E
+  result (1.22×) matters.</p>
+</div>
+
+<footer>GRIDRUSH — every figure on every page is generated from the files in
+<a href="https://github.com/dmitrypehovski/gridrush">the repository</a>; nothing is hand-typed into a chart.</footer>
+</body></html>

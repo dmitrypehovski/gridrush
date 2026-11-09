@@ -1,0 +1,191 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>GRIDRUSH — 3D plan</title>
+<style>
+:root{--bg:#080d14;--panel:#0f1823;--line:#1e2c40;--txt:#e8eef7;--dim:#7b8ba3;--green:#2dd4a7;--amber:#f5a524}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
+ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif}
+canvas{display:block}
+.hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:18px 22px}
+.top{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+h1{font-size:26px;letter-spacing:2px;font-weight:850;pointer-events:auto}
+h1 small{display:block;font-size:11px;letter-spacing:.4px;color:var(--dim);font-weight:500;margin-top:3px}
+.kpis{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap;pointer-events:auto}
+.kpi{background:rgba(15,24,35,.86);border:1px solid var(--line);border-radius:9px;padding:7px 12px;min-width:118px}
+.kpi .l{font-size:9px;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase}
+.kpi .v{font-size:21px;font-weight:800;line-height:1.15}
+.kpi .v.g{color:var(--green)} .kpi .v.a{color:var(--amber)}
+.bottom{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.panel{background:rgba(15,24,35,.9);border:1px solid var(--line);border-radius:10px;padding:11px 14px;pointer-events:auto;max-width:640px}
+.panel b{color:var(--txt)}
+.panel .t{font-size:9.5px;letter-spacing:1.4px;color:var(--dim);text-transform:uppercase;margin-bottom:4px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#b9c7da;margin-top:6px;align-items:center}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+button{pointer-events:auto;font:inherit;font-size:11.5px;font-weight:700;color:#06231c;background:var(--green);
+ border:0;border-radius:7px;padding:8px 13px;cursor:pointer;margin-top:8px}
+button.ghost{background:#111c29;color:#dbe6f3;border:1px solid #2f4a68}
+.hint{font-size:10px;color:var(--dim);margin-top:6px}
+.real{max-width:520px}
+.real .big{font-size:15px;font-weight:800;margin-bottom:3px}
+.real .row{font-size:11.5px;color:#b9c7da;margin-top:3px}
+.real b{color:#fff}
+@media (max-width:900px){.kpi{min-width:96px}.real{max-width:100%}}
+</style></head><body>
+<div class="hud">
+  <div class="top">
+    <h1>GRIDRUSH — the plan in 3D<small>8 substations · 40 candidate sites · 32 energized · bar height = MW · colour = availability tier</small></h1>
+    <div class="kpis">
+      <div class="kpi"><div class="l">net value vs best</div><div class="v g" id="k-ratio">—</div></div>
+      <div class="kpi"><div class="l">MW at month 12</div><div class="v" id="k-mw">—</div></div>
+      <div class="kpi"><div class="l">sellable MW&middot;months</div><div class="v" id="k-cm">—</div></div>
+      <div class="kpi"><div class="l">sites energized</div><div class="v" id="k-sites">—</div></div>
+    </div>
+  </div>
+  <div class="bottom">
+    <div class="panel real">
+      <div class="t">Real example &middot; CAISO, 21 August 2025</div>
+      <div class="big">Peak 43,860 MW at 20:00 — after sunset</div>
+      <div class="row">At <b>18:00</b>, on the way into the peak, the naive "sign everything non-firm" plan
+        must shed <b>28.4 MW</b> of compute. GRIDRUSH sheds <b>1.0 MW</b>. At the 20:00 peak itself:
+        <b>18.2 vs 0.0 MW</b>.</div>
+      <div class="row">That is the whole product: the same 40 sites, the same grid, a plan that is
+        <b>4.3&times;</b> more valuable and still keeps every site inside its SLA.</div>
+      <button id="replay">Replay the plan</button>
+      <button class="ghost" id="orbit">Pause camera</button>
+      <div class="hint">drag to rotate &middot; scroll to zoom</div>
+    </div>
+    <div class="panel" style="max-width:330px">
+      <div class="t">availability tier</div>
+      <div class="legend">
+        <span><i class="sw" style="background:#f59e0b"></i>99.99% &middot; premium &times;1.25</span>
+        <span><i class="sw" style="background:#fbbf24"></i>99.9% &middot; &times;1.00</span>
+        <span><i class="sw" style="background:#fde68a"></i>99% &middot; &times;0.80</span>
+      </div>
+      <div class="legend" style="margin-top:6px">
+        <span><i class="sw" style="background:#334155"></i>refused (8)</span>
+        <span><i class="sw" style="background:#1f2b3a"></i>substation</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="vendor/three.min.js"></script>
+<script>
+const DATA = {"meta": {"region": "CAL / CAISO", "n_sites": 40, "energized": 32, "net_musd": 279.908, "mw12": 85.39, "ratio": 4.3, "iters": 207, "compliant": 2490.58, "baseline_net": 65.13, "naive_net": -449.45, "naive_mw12": 172.6}, "substations": [{"name": "S01", "x": -117.89259999999999, "y": 35.3952, "cap_mw": 12.0, "n_sites": 5}, {"name": "S02", "x": -121.76079999999999, "y": 39.7228, "cap_mw": 48.6, "n_sites": 5}, {"name": "S03", "x": -115.6484, "y": 37.6716, "cap_mw": 30.8, "n_sites": 5}, {"name": "S04", "x": -120.08340000000001, "y": 36.9426, "cap_mw": 45.6, "n_sites": 5}, {"name": "S05", "x": -115.2594, "y": 40.9712, "cap_mw": 58.9, "n_sites": 5}, {"name": "S06", "x": -115.7992, "y": 33.077799999999996, "cap_mw": 36.0, "n_sites": 5}, {"name": "S07", "x": -123.3646, "y": 37.7438, "cap_mw": 34.1, "n_sites": 5}, {"name": "S08", "x": -117.9182, "y": 35.6208, "cap_mw": 11.7, "n_sites": 5}], "sites": [{"id": "S05-1", "sub": "S05", "x": -115.251, "y": 41.102, "max_mw": 8.5, "mode": "flex", "mw": 8.5, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 7}, {"id": "S03-4", "sub": "S03", "x": -115.753, "y": 37.827, "max_mw": 7.0, "mode": "flex", "mw": 7.0, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 5}, {"id": "S06-2", "sub": "S06", "x": -115.955, "y": 32.929, "max_mw": 7.5, "mode": "flex", "mw": 5.75, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 7}, {"id": "S02-1", "sub": "S02", "x": -121.808, "y": 39.779, "max_mw": 5.5, "mode": "flex", "mw": 5.5, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 5}, {"id": "S05-2", "sub": "S05", "x": -115.359, "y": 40.829, "max_mw": 5.0, "mode": "flex", "mw": 5.0, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 5}, {"id": "S02-5", "sub": "S02", "x": -121.634, "y": 39.883, "max_mw": 7.0, "mode": "flex", "mw": 4.94, "sla": 0.99, "avail": 0.990068, "curtail_h": 87.0, "month": 10}, {"id": "S04-2", "sub": "S04", "x": -120.136, "y": 36.803, "max_mw": 6.0, "mode": "flex", "mw": 4.48, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 6}, {"id": "S06-5", "sub": "S06", "x": -115.996, "y": 33.165, "max_mw": 4.0, "mode": "flex", "mw": 4.0, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 5}, {"id": "S05-3", "sub": "S05", "x": -115.298, "y": 40.917, "max_mw": 8.5, "mode": "flex", "mw": 3.96, "sla": 0.99, "avail": 0.990183, "curtail_h": 86.0, "month": 10}, {"id": "S04-5", "sub": "S04", "x": -119.855, "y": 37.011, "max_mw": 9.5, "mode": "flex", "mw": 3.7, "sla": 0.99, "avail": 0.990183, "curtail_h": 86.0, "month": 8}, {"id": "S07-1", "sub": "S07", "x": -123.187, "y": 37.661, "max_mw": 3.5, "mode": "flex", "mw": 3.5, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 6}, {"id": "S02-2", "sub": "S02", "x": -121.523, "y": 39.856, "max_mw": 4.5, "mode": "flex", "mw": 3.02, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 7}, {"id": "S01-4", "sub": "S01", "x": -117.749, "y": 35.282, "max_mw": 4.5, "mode": "flex", "mw": 2.94, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 5}, {"id": "S03-1", "sub": "S03", "x": -115.734, "y": 37.456, "max_mw": 5.5, "mode": "flex", "mw": 1.91, "sla": 0.99, "avail": 0.990183, "curtail_h": 86.0, "month": 10}, {"id": "S05-5", "sub": "S05", "x": -115.356, "y": 41.008, "max_mw": 3.5, "mode": "flex", "mw": 1.76, "sla": 0.999, "avail": 0.999087, "curtail_h": 8.0, "month": 7}, {"id": "S07-2", "sub": "S07", "x": -123.439, "y": 37.784, "max_mw": 3.5, "mode": "flex", "mw": 1.67, "sla": 0.99, "avail": 0.995662, "curtail_h": 38.0, "month": 9}, {"id": "S04-3", "sub": "S04", "x": -120.255, "y": 36.994, "max_mw": 2.5, "mode": "flex", "mw": 1.64, "sla": 0.999, "avail": 0.999087, "curtail_h": 8.0, "month": 6}, {"id": "S02-4", "sub": "S02", "x": -121.933, "y": 39.446, "max_mw": 1.5, "mode": "flex", "mw": 1.5, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 6}, {"id": "S06-1", "sub": "S06", "x": -115.672, "y": 33.19, "max_mw": 5.0, "mode": "flex", "mw": 1.48, "sla": 0.99, "avail": 0.995662, "curtail_h": 38.0, "month": 9}, {"id": "S03-3", "sub": "S03", "x": -115.511, "y": 37.672, "max_mw": 9.5, "mode": "flex", "mw": 1.38, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 6}, {"id": "S01-2", "sub": "S01", "x": -117.811, "y": 35.27, "max_mw": 7.5, "mode": "flex", "mw": 1.17, "sla": 0.99, "avail": 0.990183, "curtail_h": 86.0, "month": 6}, {"id": "S07-5", "sub": "S07", "x": -123.556, "y": 37.986, "max_mw": 5.0, "mode": "flex", "mw": 1.17, "sla": 0.999, "avail": 0.999087, "curtail_h": 8.0, "month": 8}, {"id": "S05-4", "sub": "S05", "x": -115.033, "y": 41.0, "max_mw": 1.5, "mode": "flex", "mw": 1.16, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 7}, {"id": "S07-3", "sub": "S07", "x": -123.275, "y": 37.62, "max_mw": 2.0, "mode": "flex", "mw": 1.13, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 6}, {"id": "S06-3", "sub": "S06", "x": -115.592, "y": 33.116, "max_mw": 5.0, "mode": "flex", "mw": 1.04, "sla": 0.999, "avail": 0.999087, "curtail_h": 8.0, "month": 8}, {"id": "S08-3", "sub": "S08", "x": -117.893, "y": 35.626, "max_mw": 5.5, "mode": "flex", "mw": 1.01, "sla": 0.99, "avail": 0.990183, "curtail_h": 86.0, "month": 6}, {"id": "S03-5", "sub": "S03", "x": -115.506, "y": 37.797, "max_mw": 1.0, "mode": "flex", "mw": 1.0, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 5}, {"id": "S07-4", "sub": "S07", "x": -123.366, "y": 37.668, "max_mw": 4.5, "mode": "flex", "mw": 0.98, "sla": 0.99, "avail": 0.990183, "curtail_h": 86.0, "month": 9}, {"id": "S08-4", "sub": "S08", "x": -117.94, "y": 35.412, "max_mw": 5.0, "mode": "flex", "mw": 0.88, "sla": 0.999, "avail": 0.999087, "curtail_h": 8.0, "month": 5}, {"id": "S06-4", "sub": "S06", "x": -115.781, "y": 32.989, "max_mw": 2.0, "mode": "flex", "mw": 0.87, "sla": 0.99, "avail": 0.990183, "curtail_h": 86.0, "month": 9}, {"id": "S03-2", "sub": "S03", "x": -115.738, "y": 37.606, "max_mw": 7.0, "mode": "flex", "mw": 0.85, "sla": 0.999, "avail": 0.999087, "curtail_h": 8.0, "month": 8}, {"id": "S02-3", "sub": "S02", "x": -121.906, "y": 39.65, "max_mw": 0.5, "mode": "flex", "mw": 0.5, "sla": 0.9999, "avail": 1.0, "curtail_h": 0.0, "month": 6}], "stress": {"date": "2025-08-21", "region": "CAL", "hours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], "demand_mw": [33859.0, 31234.0, 29371.0, 28075.0, 27149.0, 26364.0, 25610.0, 26190.0, 27610.0, 30518.0, 34698.0, 35953.0, 36096.0, 35336.0, 35597.0, 36561.0, 38641.0, 40870.0, 42269.0, 43665.0, 43860.0, 42342.0, 41099.0, 39138.0], "solar_mw": [-6.0, -25.0, -25.0, -24.0, -24.0, -24.0, -23.0, -23.0, 637.0, 6578.0, 13564.0, 16059.0, 16926.0, 16969.0, 16846.0, 16329.0, 16493.0, 15155.0, 13699.0, 10609.0, 4389.0, 312.0, -35.0, -30.0], "headroom_mw": [128.0, 134.3, 138.9, 142.7, 146.4, 143.6, 136.6, 122.3, 101.8, 95.7, 95.0, 98.7, 97.4, 92.7, 82.5, 71.5, 64.7, 57.8, 56.8, 64.3, 70.4, 80.0, 93.4, 108.5], "curtail_mw": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.22, 0.92, 1.02, 0.25, 0.0, 0.0, 0.0, 0.0], "curtail_mw_naive": [3.98, 3.07, 2.42, 1.87, 1.36, 1.74, 2.74, 4.79, 7.73, 8.62, 8.72, 8.18, 8.37, 9.14, 11.48, 17.58, 21.73, 27.43, 28.41, 22.01, 18.21, 12.84, 9.0, 6.77], "peak_demand_mw": 43860.0, "note": "real 2025 EIA-930 demand and solar for CAL (local time), peak 43860 MW; headroom and required curtailment are model output on synthetic site geometry"}};
+const M = DATA.meta;
+document.getElementById('k-ratio').textContent = M.ratio.toFixed(2) + '\u00d7';
+document.getElementById('k-mw').textContent = M.mw12.toFixed(1) + ' MW';
+document.getElementById('k-cm').textContent = Math.round(M.compliant).toLocaleString();
+document.getElementById('k-sites').textContent = M.energized + ' / ' + M.n_sites;
+
+// ---- normalise geographic coordinates into the scene ----
+const sub = DATA.substations;
+const xs = sub.map(s => s.x), ys = sub.map(s => s.y);
+const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+const spanX = Math.max(1e-6, Math.max(...xs) - Math.min(...xs));
+const spanY = Math.max(1e-6, Math.max(...ys) - Math.min(...ys));
+const span = Math.max(spanX, spanY);
+const P = (x, y) => [ (x - cx) / span * 26, -(y - cy) / span * 26 ];
+
+// ---- three.js scene ----
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x080d14);
+scene.fog = new THREE.Fog(0x080d14, 55, 95);
+const camera = new THREE.PerspectiveCamera(46, window.innerWidth/window.innerHeight, 0.1, 400);
+const camR = 46, camH = 26;
+let camAng = 0.6, orbitPaused = false;
+
+scene.add(new THREE.AmbientLight(0x88a4c4, 0.55));
+const key = new THREE.DirectionalLight(0xbfe3ff, 0.95); key.position.set(18, 34, 14); scene.add(key);
+const rim = new THREE.DirectionalLight(0x22d3ee, 0.35); rim.position.set(-20, 14, -24); scene.add(rim);
+
+// ground + grid
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120),
+  new THREE.MeshStandardMaterial({color:0x0b1420, roughness:1, metalness:0}));
+ground.rotation.x = -Math.PI/2; ground.position.y = -0.02; scene.add(ground);
+const grid = new THREE.GridHelper(120, 48, 0x1a2b3d, 0x122031); grid.position.y = 0; scene.add(grid);
+
+// substations: platform + faint pole
+const subPos = {};
+sub.forEach((s, i) => {
+  const [px, pz] = P(s.x, s.y); subPos[s.name] = [px, pz];
+  const pad = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.7, 0.35, 24),
+    new THREE.MeshStandardMaterial({color:0x1f2b3a, roughness:.85, metalness:.15}));
+  pad.position.set(px, 0.17, pz); scene.add(pad);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.62, 0.045, 8, 48),
+    new THREE.MeshBasicMaterial({color:0x2c5a4c}));
+  ring.rotation.x = Math.PI/2; ring.position.set(px, 0.36, pz); scene.add(ring);
+});
+
+// sites: bars grow on load
+const TIER = a => a>=0.9999 ? 0xf59e0b : (a>=0.999 ? 0xfbbf24 : 0xfde68a);
+const bars = [];
+DATA.sites.forEach((s, idx) => {
+  const [sx, sz] = subPos[s.sub] || [0,0];
+  const ring = 1.35 + (idx % 5) * 0.22, ang = (idx * 2.399) % (Math.PI*2);
+  const x = sx + Math.cos(ang) * ring, z = sz + Math.sin(ang) * ring;
+  const h = Math.max(0.6, s.mw * 0.85);
+  const geo = new THREE.BoxGeometry(0.52, 1, 0.52);
+  geo.translate(0, 0.5, 0);
+  const mat = new THREE.MeshStandardMaterial({color:TIER(s.sla), roughness:.45, metalness:.25,
+    emissive:new THREE.Color(TIER(s.sla)).multiplyScalar(0.06)});
+  const bar = new THREE.Mesh(geo, mat);
+  bar.position.set(x, 0.02, z); bar.scale.y = 0.001;
+  bar.userData = {h, delay: idx * 0.012};
+  scene.add(bar); bars.push(bar);
+  // thin outline
+  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo),
+    new THREE.LineBasicMaterial({color:0x08101a, transparent:true, opacity:.5}));
+  edge.position.copy(bar.position); edge.scale.y = 0.001; edge.userData = bar.userData;
+  scene.add(edge); bar.userData.edge = edge;
+});
+
+// refused sites: small dark markers
+DATA.substations.forEach(s => {
+  const [sx, sz] = subPos[s.name];
+  for (let k=0;k<3;k++){
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.3),
+      new THREE.MeshStandardMaterial({color:0x334155, roughness:.9}));
+    m.position.set(sx + Math.cos(k*2.1)*3.1, 0.15, sz + Math.sin(k*2.1)*3.1); scene.add(m);
+  }
+});
+
+// animate
+const clock = new THREE.Clock();
+let t0 = clock.getElapsedTime();
+function replay(){ t0 = clock.getElapsedTime(); bars.forEach(b => { b.scale.y = 0.001; b.userData.edge.scale.y = 0.001; }); }
+document.getElementById('replay').onclick = replay;
+document.getElementById('orbit').onclick = e => { orbitPaused = !orbitPaused; e.target.textContent = orbitPaused ? 'Resume camera' : 'Pause camera'; };
+
+// drag to rotate
+let dragging=false, lastX=0;
+renderer.domElement.addEventListener('pointerdown', e => {dragging=true; lastX=e.clientX;});
+renderer.domElement.addEventListener('pointerup', () => dragging=false);
+renderer.domElement.addEventListener('pointermove', e => { if(dragging){ camAng -= (e.clientX-lastX)*0.006; lastX=e.clientX; }});
+renderer.domElement.addEventListener('wheel', e => { camera.fov = Math.min(70, Math.max(30, camera.fov + Math.sign(e.deltaY)*2)); camera.updateProjectionMatrix(); }, {passive:true});
+
+function frame(){
+  requestAnimationFrame(frame);
+  const t = clock.getElapsedTime() - t0;
+  if (!orbitPaused && !dragging) camAng += 0.0016;
+  camera.position.set(Math.cos(camAng)*camR, camH, Math.sin(camAng)*camR);
+  camera.lookAt(0, 3, 0);
+  bars.forEach(b => {
+    const u = b.userData;
+    const k = Math.min(1, Math.max(0, (t - u.delay) / 1.1));
+    const e = 1 - Math.pow(1-k, 3);
+    const y = Math.max(0.001, u.h * e);
+    b.scale.y = y; u.edge.scale.y = y;
+  });
+  renderer.render(scene, camera);
+}
+frame();
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script></body></html>

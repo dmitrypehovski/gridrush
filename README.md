@@ -13,10 +13,10 @@ Built in one day at **SF x MIT Hack Day: Energy** (AGI House SF, 2026-11-08), tr
 
 | What | Where |
 |---|---|
-| **AI-generated overview deck** (NotebookLM, from a single source pack) | [`pitch/GRIDRUSH-AI-overview-deck.pdf`](pitch/GRIDRUSH-AI-overview-deck.pdf) |
-| **One-page leave-behind** (A4 landscape, everything on one page) | [`pitch/GRIDRUSH-one-pager.pdf`](pitch/GRIDRUSH-one-pager.pdf) |
-| **Single source pack** used to generate the deck (18 sections, 5.1k words) | [`NOTEBOOKLM_SOURCE.md`](NOTEBOOKLM_SOURCE.md) |
-| **Public site** with all dashboards + download | https://dmitrypehovski.github.io/gridrush/ |
+| **Overview deck** — the whole story in ten slides | [`pitch/GRIDRUSH-overview-deck.pdf`](pitch/GRIDRUSH-overview-deck.pdf) |
+| **One-page leave-behind** (A4 landscape) | [`pitch/GRIDRUSH-one-pager.pdf`](pitch/GRIDRUSH-one-pager.pdf) |
+| **Project source pack** — one self-contained document, 18 sections | [`PROJECT_SOURCE_PACK.md`](PROJECT_SOURCE_PACK.md) |
+| **Public site** with all dashboards and a one-click download | https://dmitrypehovski.github.io/gridrush/ |
 | **3-minute verbatim demo script** + cue card + 16-question Q&A | [`pitch/demo-script.md`](pitch/demo-script.md) |
 
 ## The problem, in one number

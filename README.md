@@ -14,6 +14,7 @@ Built in one day at **SF x MIT Hack Day: Energy** (AGI House SF, 2026-11-08), tr
 | What | Where |
 |---|---|
 | **Overview deck** — the whole story in ten slides | [`pitch/GRIDRUSH-overview-deck.pdf`](pitch/GRIDRUSH-overview-deck.pdf) |
+| **Overview video** — the three-minute walkthrough | [`docs/GRIDRUSH-overview.mp4`](docs/GRIDRUSH-overview.mp4) |
 | **One-page leave-behind** (A4 landscape) | [`pitch/GRIDRUSH-one-pager.pdf`](pitch/GRIDRUSH-one-pager.pdf) |
 | **Project source pack** — one self-contained document, 18 sections | [`PROJECT_SOURCE_PACK.md`](PROJECT_SOURCE_PACK.md) |
 | **Public site** with all dashboards and a one-click download | https://dmitrypehovski.github.io/gridrush/ |

@@ -31,6 +31,27 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:10px;font-si
     every artifact of the project, offline, no keys</div>
 </header>
 
+<div class="hero-dl">
+  <div class="hero-txt"><b>Download the whole project</b>
+    <span>source, data, every result JSON, all dashboards and the one-pager — offline, no keys</span></div>
+  <div class="hero-btns">
+    <a class="dl primary" href="../gridrush.zip" download>&#11015; Download GRIDRUSH-project.zip <em>6 MB</em></a>
+    <a class="dl" href="https://github.com/dmitrypehovski/gridrush/archive/refs/heads/main.zip">Source ZIP from GitHub</a>
+  </div>
+</div>
+<style>
+.hero-dl{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:linear-gradient(90deg,rgba(45,212,167,.12),rgba(15,24,35,.55));
+ border:1px solid #2c5a4c;border-radius:12px;padding:16px 20px;margin:0 0 18px}
+.hero-txt{display:flex;flex-direction:column;gap:3px}
+.hero-txt b{font-size:16px}
+.hero-txt span{font-size:12px;color:#b9c7da}
+.hero-btns{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dl{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;text-decoration:none;
+ border-radius:8px;padding:10px 14px;border:1px solid #2f4a68;color:#dbe6f3;background:#111c29}
+.dl:hover{border-color:#4c9aff}
+.dl.primary{background:var(--green);color:#06231c;border-color:var(--green)}
+.dl.primary em{font-style:normal;font-weight:600;opacity:.7;font-size:11px}
+</style>
 <h2>1 · the demo (three minutes)</h2>
 <div class="grid">
   <a class="card" href="dashboard.html">

@@ -31,6 +31,27 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:10px;font-si
     every artifact of the project, offline, no keys</div>
 </header>
 
+<div class="hero-dl">
+  <div class="hero-txt"><b>Download the whole project</b>
+    <span>source, data, every result JSON, all dashboards and the one-pager — offline, no keys</span></div>
+  <div class="hero-btns">
+    <a class="dl primary" href="GRIDRUSH-project.zip" download>&#11015; Download GRIDRUSH-project.zip <em>6 MB</em></a>
+    <a class="dl" href="https://github.com/dmitrypehovski/gridrush/archive/refs/heads/main.zip">Source ZIP from GitHub</a>
+  </div>
+</div>
+<style>
+.hero-dl{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:linear-gradient(90deg,rgba(45,212,167,.12),rgba(15,24,35,.55));
+ border:1px solid #2c5a4c;border-radius:12px;padding:16px 20px;margin:0 0 18px}
+.hero-txt{display:flex;flex-direction:column;gap:3px}
+.hero-txt b{font-size:16px}
+.hero-txt span{font-size:12px;color:#b9c7da}
+.hero-btns{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dl{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;text-decoration:none;
+ border-radius:8px;padding:10px 14px;border:1px solid #2f4a68;color:#dbe6f3;background:#111c29}
+.dl:hover{border-color:#4c9aff}
+.dl.primary{background:var(--green);color:#06231c;border-color:var(--green)}
+.dl.primary em{font-style:normal;font-weight:600;opacity:.7;font-size:11px}
+</style>
 <h2>0 · start here</h2>
 <div class="grid"><a class="card" href="one-pager.pdf"><div class="row"><span class="code g">PDF</span><span class="name">GRIDRUSH one-pager</span><span class="tag">A4 landscape</span></div><div class="desc">Problem, three strategies, 4.30× result, learning curve, AC power-flow check, real vs synthetic.</div></a><a class="card" href="https://github.com/dmitrypehovski/gridrush/blob/main"><div class="row"><span class="code">GITHUB</span><span class="name">Source repository</span><span class="tag">public</span></div><div class="desc">Every baseline, every region, every iteration, all assumptions, one-pager, offline dashboards.</div></a></div>
 <h2>1 · the demo (three minutes)</h2>

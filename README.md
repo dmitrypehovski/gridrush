@@ -9,6 +9,16 @@ Built in one day at **SF x MIT Hack Day: Energy** (AGI House SF, 2026-11-08), tr
 
 ---
 
+## Presentation material (start here to understand the project)
+
+| What | Where |
+|---|---|
+| **AI-generated overview deck** (NotebookLM, from a single source pack) | [`pitch/GRIDRUSH-AI-overview-deck.pdf`](pitch/GRIDRUSH-AI-overview-deck.pdf) |
+| **One-page leave-behind** (A4 landscape, everything on one page) | [`pitch/GRIDRUSH-one-pager.pdf`](pitch/GRIDRUSH-one-pager.pdf) |
+| **Single source pack** used to generate the deck (18 sections, 5.1k words) | [`NOTEBOOKLM_SOURCE.md`](NOTEBOOKLM_SOURCE.md) |
+| **Public site** with all dashboards + download | https://dmitrypehovski.github.io/gridrush/ |
+| **3-minute verbatim demo script** + cue card + 16-question Q&A | [`pitch/demo-script.md`](pitch/demo-script.md) |
+
 ## The problem, in one number
 
 A data center can be built in 2–3 years; grid interconnection historically takes longer. ERCOT
